@@ -1,0 +1,84 @@
+=head1 Parrotlog
+
+This is Parrotlog, a Prolog compiler for the Parrot virtual machine.
+
+=head2 Build requirements (installing from source)
+
+For building Parrotlog you need at least a C compiler, a C<make> utility,
+and Perl 5.8 or newer.  To automatically obtain and build Parrot
+you may also need a subversion (svn) client.
+
+=head2 Building and invoking Parrotlog
+
+We generally recommend downloading Parrotlog directly from
+http://github.com/arnsholt/parrotlog
+
+Once you have a copy of Parrotlog, build it as follows:
+
+    $ cd parrotlog
+    $ perl Configure.pl --gen-parrot
+    $ make
+
+This will create a "parrotlog" or "parrotlog.exe" executable in the
+current directory.  Programs can then be run from the build
+directory using a command like:
+
+    $ ./parrotlog <source>
+
+The C<--gen-parrot> option above tells Configure.pl to automatically
+download and build the most appropriate version of Parrot into
+a local "parrot/" subdirectory, install that Parrot into
+the "parrot_install/" subdirectory, and use that for building
+Parrotlog.  It's okay to use the C<--gen-parrot> option on later
+invocations of Configure.pl; the configure system will re-build
+Parrot only if a newer version is needed for whatever version
+of Parrotlog you're working with.
+
+You can use C<--parrot-config=/path/to/parrot_config> instead
+of C<--gen-parrot> to use an already installed Parrot for building
+Parrotlog.  This installed Parrot must include its development
+environment; typically this is done via Parrot's C<make install>
+target or by installing prebuilt C<parrot-devel> and/or C<libparrot-dev>
+packages.  The version of the already installed Parrot must satisfy a
+minimum specified by Parrotlog -- Configure.pl will verify this for you.
+
+Once built, Parrotlog's C<make install> target will install Parrotlog
+and its libraries into the Parrot installation that was used to
+create it.  Until this step is performed, the "parrotlog" executable
+created by C<make> above can only be reliably run from the root of
+Parrotlog's build directory.  After C<make install> is performed,
+the installed executable can be run from any directory (as long as
+the Parrot installation that was used to create it remains intact).
+
+If the Parrotlog compiler is invoked without an explicit script to
+run, it enters a small interactive mode that allows statements
+to be executed from the command line.  Each line entered is treated
+as a separate compilation unit, however (which means that subroutines
+are preserved after they are defined, but variables are not).
+
+=head2 Running the test suite
+
+Entering C<make test> will run a test suite that comes bundled
+with Parrotlog.  This is a simple suite of tests, designed to make sure
+that the compiler is basically working and that it's capable of
+running a simple test harness.
+
+If you want to run the tests in parallel, you need to install a
+fairly recent version of the Perl 5 module L<Test::Harness> (3.16
+works for sure).
+
+=head2 Where to get help or answers to questions
+
+=head2 Reporting bugs
+
+=head2 Submitting patches
+
+=head2 How the compiler works
+
+See F<docs/compiler_overview.pod>.
+
+=head1 AUTHOR
+
+=cut
+
+## vim: expandtab sw=4 ft=pod tw=70:
