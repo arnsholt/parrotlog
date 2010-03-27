@@ -1,0 +1,12 @@
+# Ignore files created by the build process.
+Makefile
+parrot/
+parrot_install/
+parrotlog
+*.o
+# This exclusion should perhaps be modified if we add C code.
+*.c
+*.pbc
+
+# Ignore vim swap files.
+.*.swp
