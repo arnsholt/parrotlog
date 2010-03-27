@@ -1,0 +1,93 @@
+#! perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use File::Spec;
+use Getopt::Long qw(:config pass_through);
+
+$ENV{'HARNESS_PERL'} = './parrotlog';
+use Test::Harness;
+$Test::Harness::switches = '';
+
+GetOptions(
+    'tests-from-file=s' => \my $list_file,
+    'verbosity=i'       => \$Test::Harness::verbose,
+    'jobs:3'            => \my $jobs,
+    'icu:1'             => \my $do_icu,
+);
+
+my @pass_through_options = grep m/^--?[^-]/, @ARGV;
+my @files = grep m/^[^-]/, @ARGV;
+
+my $slash = $^O eq 'MSWin32' ? '\\' : '/';
+
+if ($list_file) {
+    open(my $f, '<', $list_file)
+        or die "Can't open file '$list_file' for reading: $!";
+    while (<$f>) {
+        next if m/^\s*#/;
+        next unless m/\S/;
+        chomp;
+        my ($fn, $flags) = split /\s+#\s*/;
+        next if ($flags && ($flags =~ m/icu/) && !$do_icu);
+        $fn = "t/spec/$fn" unless $fn =~ m/^t\Q$slash\Espec\Q$slash\E/;
+        $fn =~ s{/}{$slash}g;
+        if ( -r $fn ) {
+            push @files, $fn;
+        }
+        else {
+            warn "Missing test file: $fn\n";
+        }
+    }
+    close $f or die $!;
+}
+
+my @tfiles = map { all_in($_) } sort @files;
+
+if (eval { require TAP::Harness; 1 }) {
+    my %harness_options = (
+        exec      => ['./parrotlog'],
+        verbosity => 0+$Test::Harness::verbose,
+        jobs      => $jobs || 1,
+    );
+    TAP::Harness->new( \%harness_options )->runtests(@tfiles);
+}
+else {
+    runtests(@tfiles);
+}
+
+# adapted to return only files ending in '.t'
+sub all_in {
+    my $start = shift;
+
+    return $start unless -d $start;
+
+    my @skip = ( File::Spec->updir, File::Spec->curdir, qw( .svn CVS .git ) );
+    my %skip = map {($_,1)} @skip;
+
+    my @hits = ();
+
+    if ( opendir( my $dh, $start ) ) {
+        my @files = sort readdir $dh;
+        closedir $dh or die $!;
+        for my $file ( @files ) {
+            next if $skip{$file};
+
+            my $currfile = File::Spec->catfile( $start, $file );
+            if ( -d $currfile ) {
+                push( @hits, all_in( $currfile ) );
+            }
+            else {
+                push( @hits, $currfile ) if $currfile =~ /\.t$/;
+            }
+        }
+    }
+    else {
+        warn "$start: $!\n";
+    }
+
+    return @hits;
+}
+
