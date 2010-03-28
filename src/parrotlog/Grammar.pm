@@ -4,12 +4,22 @@ This is the grammar for parrotlog in Perl 6 rules.
 
 =end overview
 
-grammar parrotlog::Grammar is HLL::Grammar;
+grammar Parrotlog::Grammar is HLL::Grammar;
 
 # XXX: nqp-rx doesn't like grammar items with -, so we use _ instead.
 token TOP {
     <prolog_text>*
     [ $ || <.panic: "Syntax error"> ]
+}
+
+INIT {
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>', 'fx');
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<right>', 'fy');
+    Parrotlog::Grammar.O(':assoc<non>', 'xfx');
+    Parrotlog::Grammar.O(':assoc<right>', 'xfy');
+    Parrotlog::Grammar.O(':assoc<left>', 'yfx');
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>', 'xf');
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<left>', 'yf');
 }
 
 proto token prolog_text { <...> }
@@ -22,6 +32,8 @@ rule atom:sym<[ ]> { <sym> }
 rule atom:sym<{ }> { <sym> }
 
 # Tokens: section 6.4
+token name { <.ws> <name_token> }
+token variable { <.ws> <variable_token> }
 
 # Layout text, section 6.4.1.
 token ws { <layout_text>+ } # Layout text separates stuff, so we set <ws> to that
@@ -38,25 +50,48 @@ token comment:sym<bracketed> {
 proto token name_token { <...> }
 token name_token:sym<identifier> { <small_char> <alnum_char>* }
 token name_token:sym<graphic> { <+graphic_char +backslash>+ }
-# TODO: This stuff should probably be implemented with quote_EXPR. I just have
-# to figure out how quote_EXPR works...
-#token name_token:sym<quoted> {
-#    <single_quote_char> [ <single_quoted_char> | \\ \n ]* <single_quote_char>
-#}
-#token semicolon_token { <semicolon_char> }
-#token cut_token { <cut_char> }
-#proto token single_quoted_char { <...> }
-#token single_quoted_char:sym<non-quote> { <+graphic_char
-#                                           +alnum_char
-#                                           +solo_char
-#                                           +space> }
-#token single_quoted_char:sym<meta-escape> { <backslash_char> <meta_char> }
-#token single_quoted_char:sym<control-escape> { 
+token name_token:sym<quoted> { <?[']> <quote_EXPR> } # For vim: ' ]> }
+
+# We might be able to get some of this for free using quote_EXPR's quotemod
+# features, but I'm not quite sure if it'll work exactly as I want to.
+# We override quote_atom, because the default rule wants the matche to be
+# <!stopper>, which means that quote_escape:sym<stopper> will never match.
+token quote_atom {
+    [
+    | <quote_escape>
+    | [ <-quote_escape-stopper> ]+
+    ]
+}
+token quote_escape:sym<continuation> { <backslash> \n }
+token quote_escape:sym<stopper> { <stopper> <stopper> }
+token quote_escape:sym<control> { <backslash> <[abfnrtv]> }
+token quote_escape:sym<octal> { <backslash> <octdigit_char> <backslash> }
+token quote_escape:sym<hex> { <backslash> x <hexdigit_char> <backslash>  }
 
 # Variables: section 6.4.3
-proto token variable { <...> }
-token variable:sym<anonymous> { <underscore> }
-token variable:sym<named> { <underscore> <alnum-char>+ | <capital-char> <alnum-char>* }
+proto token variable_token { <...> }
+token variable_token:sym<anonymous> { <underscore> }
+token variable_token:sym<named> { <underscore> <alnum_char>+ | <capital_char> <alnum_char>* }
+
+# Integers: section 6.4.4
+token integer_token {
+    | <integer_constant>
+    | <character_code_constant>
+    | <binary_constant>
+    | <octal_constant>
+    | <hex_constant>
+}
+
+token integer_constant { <decint_char>+ }
+# XXX: Probably broken, due to <stopper> not being set correctly.
+token character_code_constant { 0 <single_quote_char> <quote_atom> }
+token binary_constant { 0b <bindigit_char>+ }
+token octal_constant { 0o <octdigit_char>+ }
+token hex_constant { 0x <hexdigit_char>+ }
+
+# Floating point numbers: section 6.4.5
+token float_token { <integer_constant> '.' <decdigit_char>+ <exponent>? }
+token exponent { <[eE]> <[\-+]>? <integer_constant> }
 
 # Characters: section 6.5
 token char { <+graphic_char +alnum_char +solo_char +layout_char +meta_char> }
@@ -65,8 +100,8 @@ token char { <+graphic_char +alnum_char +solo_char +layout_char +meta_char> }
 token graphic_char { <[#$&*+_./:<=>?@^~]> }
 
 # Alphanumerics: section 6.5.2
-token alnum_char { <+alpha +digit> }
-token alpha_char { <+underscore letter> }
+token alnum_char { <+alpha_char +digit> }
+token alpha_char { <+underscore +letter> }
 token letter_char { <+capital +small> }
 token small_char { <lower> }
 token capital_char { <upper> }

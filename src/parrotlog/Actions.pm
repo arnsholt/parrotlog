@@ -1,7 +1,7 @@
-class parrotlog::Actions is HLL::Actions;
+class Parrotlog::Actions is HLL::Actions;
 
 method TOP($/) {
-    make PAST::Block.new( $<statementlist>.ast , :hll<parrotlog>, :node($/) );
+    make PAST::Block.new( $<statementlist>.ast , :hll<Parrotlog>, :node($/) );
 }
 
 method statementlist($/) {

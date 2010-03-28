@@ -1,7 +1,7 @@
-class parrotlog::Compiler is HLL::Compiler;
+class Parrotlog::Compiler is HLL::Compiler;
 
 INIT {
-    parrotlog::Compiler.language('parrotlog');
-    parrotlog::Compiler.parsegrammar(parrotlog::Grammar);
-    parrotlog::Compiler.parseactions(parrotlog::Actions);
+    Parrotlog::Compiler.language('Parrotlog');
+    Parrotlog::Compiler.parsegrammar(Parrotlog::Grammar);
+    Parrotlog::Compiler.parseactions(Parrotlog::Actions);
 }
