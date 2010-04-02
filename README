@@ -75,9 +75,14 @@ works for sure).
 
 =head2 How the compiler works
 
-See F<docs/compiler_overview.pod>.
+There is no documentation yet, but there is a development diary at
+L<http://blogs.perl.org/users/arne_skjaerholt/>.
 
 =head1 AUTHOR
+
+Arne SkjE<aelig>rholt (L<arnsholt@gmail.com>). I can also be found in #perl6
+on Freenode and #parrot on irc.parrot.org, I'm usually available roughly
+between noon and midnight, central european time.
 
 =cut
 
