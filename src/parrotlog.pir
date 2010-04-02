@@ -15,10 +15,10 @@
 # Non-deterministic search. Choose an element from a list of options, with the
 # option to backtrack if it turns out it was an invalid value.
 .sub 'choose'
+    .param pmc paths
     .param pmc options :slurpy
     .local pmc cc
     .local pmc chosen
-    .local pmc paths
 
     # If we have no options to choose from a previous search has failed.
     if options goto got_options
@@ -30,7 +30,6 @@
     # active choice points.
     cc = new 'Continuation'
     set_addr cc, recurse
-    paths = get_global '!paths'
     push paths, cc
 
     say chosen
@@ -43,19 +42,31 @@
 # Signal that choose() has picked an invalid element, and invoke the saved
 # continuation.
 .sub 'fail'
+    .param pmc paths
     .local pmc cc
-    .local pmc paths
 
-    paths = get_global '!paths'
-
-    if paths goto got_paths
-    cc = get_global '!topcc'
-    goto call_cc
-  got_paths:
     cc = shift paths
 
   call_cc:
     cc()
+.end
+
+# Create a new stack to backtrack over. This makes which continuations belong
+# to which group explicit when we nest things (e.g. for finall/3 and friends).
+.sub 'paths'
+    .local pmc cc
+    .local pmc stack
+
+    cc = new 'Continuation'
+    set_addr cc, final_failure
+
+    stack = new 'ResizablePMCArray'
+    push stack, cc
+
+    .return (stack)
+
+  final_failure:
+    .return ()
 .end
 
 # TODO: Implement mark() and cut().
@@ -65,12 +76,17 @@
 .include 'src/gen/parrotlog-compiler.pir'
 .include 'src/gen/parrotlog-runtime.pir'
 
+# To make it easy to test bits and pieces of the implementation, I cheat.
+# MAIN() is defined in Runtime.pm does the various bits of testing.
 .namespace []
 .sub 'main' :main
     .param pmc args
 
-    $P0 = compreg 'Parrotlog'
-    # Cannot tailcall here. (TT #1029)
-    $P1 = $P0.'command_line'(args)
-    .return ($P1)
+    #$P0 = compreg 'Parrotlog'
+    ## Cannot tailcall here. (TT #1029)
+    #$P1 = $P0.'command_line'(args)
+    #.return ($P1)
+
+    'MAIN'()
+    .return ()
 .end
