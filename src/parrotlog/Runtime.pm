@@ -9,65 +9,67 @@ used in the Perl code.
 class Ref {
     has $!value;
 
-    method bind($x) {
-        $!value := $x;
-    }
-
-    method unbind() {
-        $!value := undef;
-    }
-
-    method value() { return $!value; }
-}
-
-=begin Variable
-
-=end Variable
-class Variable {
-    has $!value;
-
-    # Create a new free variable.
-    method free() {
-        my $var := new;
-        $var.container(Ref.new);
-    }
-
-    method bound() {
-        # XXX: Probably wrong...
-        return $!value // $!value.value.value;
-    }
-
-    method value() {
-        # XXX: Possibly wrong...
-        return $!value.value.value;
-    }
-
-    method container($c?) {
-        if $c {
-            $!value := $c;
+    method value($value?) {
+        # XXX: This should really be ``if $value'', but that breaks on the
+        # get_bool() VTABLE method not being implemented in Term, and I can't
+        # figure out how to do that in NQP.
+        if $value ~~ Term {
+            $!value := $value;
         }
 
         return $!value;
     }
+}
 
-    method equal($other) {
-        $!value =:= $other.container || value().equal($other.value);
+=begin Variable
+
+Variable is the internal data structure used for Prolog Variables.
+
+=end Variable
+class Variable {
+    has $!container;
+
+    # Create a new free variable.
+    method free() {
+        my $var := self.new;
+        $var.unbind();
+        return $var;
+    }
+
+    method value() {
+        return $!container.value;
+    }
+
+    my method container() {
+        return $!container;
     }
 
     method bind($other) {
-        fail() if bound;
+        pir::die("Attempted to bind bound Variable") if self.value;
 
-        if $other ~~ Var {
-            $!value := $other.container;
+        if $other ~~ Variable {
+            if $other.bound {
+                $!container.value($other.value);
+            }
+            else {
+                $!container := $other.container;
+            }
+        }
+        elsif $other ~~ Term {
+            $!container.value($other);
         }
         else {
-            # TODO
+            pir::die("Attempted to bind Variable to non-Variable, non-Term");
         }
-        return 1;
+    }
+
+    # Because ``if $variable.value'' is broken.
+    method bound() {
+        return self.value ~~ Term;
     }
 
     method unbind() {
-        $!value := Ref.new;
+        $!container := Ref.new;
     }
 }
 
@@ -83,6 +85,8 @@ class Term {
     has $!arity;
     has @!args;
 
+    method get_bool() { return 1; }
+
     method from_data($functor, *@args) {
         my $term := Term.new;
         $term.functor($functor);
@@ -92,7 +96,6 @@ class Term {
         return $term;
     }
 
-    # XXX: No objects have a defined() method.
     method functor($ctor?) {
         if $ctor {
             $!functor := $ctor;
@@ -142,8 +145,10 @@ sub unify($paths, $x, $y) {
 
         return 1;
     }
-    elsif $x ~~ Var && $y ~~ Term
-    ||    $x ~~ Term && $y ~~ Var {
+    # BUG: Binding a variable to a value represents a choice point, so we have
+    # to save a continuation and undo the binding on failure.
+    elsif ($x ~~ Variable && $y ~~ Term)
+    ||    ($x ~~ Term && $y ~~ Variable) {
         # To simplify control flow.
         if $x ~~ Term {
             my $tmp := $x;
@@ -151,20 +156,40 @@ sub unify($paths, $x, $y) {
             $y := $tmp;
         }
 
-        # TODO
-        $x.bind($y);
+        my $var := $x;
+        my $term := $y;
+
+        diag("var/term unification");
+        if $var.bound {
+            diag("var bound");
+            unify($paths, $var.value, $term);
+        }
+        else {
+            diag("var unbound");
+            $var.bind($term);
+        }
+    }
+    elsif $x ~~ Variable && $y ~~ Variable {
+        diag("var/var unification");
+        if $x.bound && $y.bound {
+            diag("both bound");
+            unify($paths, $x.value, $y.value);
+        }
+        # One or both unbound.
+        else {
+            diag("> 0 unbound");
+            if $x.bound {
+                my $tmp := $x;
+                $x := $y;
+                $y := $tmp;
+            }
+
+            $x.bind($y);
+        }
     }
     else {
-        # TODO
+        pir::die("Attempting to unify() something that isn't a Variable or a Term");
     }
-=begin sketch
-
-- If both vars are unbound, bind one to the other.
-- If only one is unbound, bind it to the bound one.
-- If both are bound: check functor and arity equal, then unify each element of
-  the arglist.
-
-=end sketch
 }
 
 # XXX: Temporary code to test guts.
@@ -187,16 +212,6 @@ sub ok($val, $msg?) {
         say("{$val ?? "" !! "not "}ok $tests");
     }
 }
-
-#sub not_ok($msg?) {
-#    $tests++;
-#    if $msg {
-#        say("not ok $tests - $msg");
-#    }
-#    else {
-#        say("not ok $tests");
-#    }
-#}
 
 sub succeeds(&block, $msg?) {
     my $*paths := paths();
@@ -235,6 +250,75 @@ sub plan($count?) {
     }
 
     say("1..$count");
+}
+
+sub MAIN() {
+    my $x := Variable.new;
+    $tests := 0;
+    ok(1, "creating empty Variable");
+
+    # Test backtracking.
+    my $paths := paths();
+    if $paths {
+        # After initial call.
+        ok(1, "creating paths");
+        fail($paths);
+    }
+    else {
+        # After call to fail().
+        ok(1, "backtracking");
+    }
+
+    exhaustive_blob();
+    cut_blob();
+
+    # Test unification of terms.
+    my $atom := Term.from_data("atom");
+    ok(1, "creating atoms");
+    unifies($atom, $atom, "unification of atom to itself");
+
+    my $other_atom := Term.from_data("atom");
+    unifies($atom, $other_atom, "unification of atom to identical atom");
+
+    my $different := Term.from_data("different");
+    not_unifies($atom, $different, "non-unification of unequal atoms");
+
+    my $complex := Term.from_data("term", $atom);
+    ok(1, "creating complex terms");
+    unifies($complex, $complex, "unification of complex term to itself");
+
+    my $other_complex := Term.from_data("term", $other_atom);
+    unifies($complex, $other_complex, "unification of complex term to identical complex term");
+
+    my $different_complex := Term.from_data("different", $atom);
+    not_unifies($complex, $different_complex, "non-unification of different complex terms");
+
+    # Test unification of variables.
+    my $free := Variable.free;
+    ok(1, "creating free variable");
+
+    unifies($free, $atom, "unification of free variable to atom");
+    ok($free.value.functor eq $atom.functor, "value after unification");
+    unifies($free, $other_atom, "unification after binding");
+
+    $paths := paths();
+    if $paths {
+        my $x := Variable.free;
+        my $y := Variable.free;
+        my $z := Variable.free;
+
+        unify($paths, $x, $y);
+        unify($paths, $y, $z);
+        unify($paths, $z, $atom);
+        # XXX: Doesn't work.
+        #ok($x.value.functor eq $z.value.functor, "transitive unification");
+    }
+    else {
+    }
+
+    # TODO: Make sure failure undoes bindings.
+
+    plan();
 }
 
 # Chocoblob example from Graham's book. Exhaustive version. (page 300)
@@ -298,51 +382,4 @@ sub coin($city, $store, $box) {
     else {
         return 0;
     }
-}
-
-sub MAIN() {
-    my $x := Variable.new;
-    $tests := 0;
-    ok(1, "creating empty Variable");
-
-    # Test backtracking.
-    my $paths := paths();
-    if $paths {
-        # After initial call.
-        ok(1, "creating paths");
-        fail($paths);
-    }
-    else {
-        # After call to fail().
-        ok(1, "backtracking");
-    }
-
-    exhaustive_blob();
-    cut_blob();
-
-    # Test unification of terms.
-    my $atom := Term.from_data("atom");
-    ok(1, "creating atoms");
-    unifies($atom, $atom, "unification of atom to itself");
-
-    my $other_atom := Term.from_data("atom");
-    unifies($atom, $other_atom, "unification of atom to identical atom");
-
-    my $different := Term.from_data("different");
-    not_unifies($atom, $different, "non-unification of unequal atoms");
-
-    my $complex := Term.from_data("term", $atom);
-    ok(1, "creating complex terms");
-    unifies($complex, $complex, "unification of complex term to itself");
-
-    my $other_complex := Term.from_data("term", $other_atom);
-    unifies($complex, $other_complex, "unification of complex term to identical complex term");
-
-    my $different_complex := Term.from_data("different", $atom);
-    not_unifies($complex, $different_complex, "non-unification of different complex terms");
-
-    # Test unification of variables.
-    # TODO
-
-    plan();
 }
