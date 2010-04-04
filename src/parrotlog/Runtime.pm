@@ -178,34 +178,34 @@ sub diag($str) {
     say("# $str");
 }
 
-sub ok($msg?) {
+sub ok($val, $msg?) {
     $tests++;
     if $msg {
-        say("ok $tests - $msg");
+        say("{$val ?? "" !! "not "}ok $tests - $msg");
     }
     else {
-        say("ok $tests");
+        say("{$val ?? "" !! "not "}ok $tests");
     }
 }
 
-sub not_ok($msg?) {
-    $tests++;
-    if $msg {
-        say("not ok $tests - $msg");
-    }
-    else {
-        say("not ok $tests");
-    }
-}
+#sub not_ok($msg?) {
+#    $tests++;
+#    if $msg {
+#        say("not ok $tests - $msg");
+#    }
+#    else {
+#        say("not ok $tests");
+#    }
+#}
 
 sub succeeds(&block, $msg?) {
     my $*paths := paths();
     if $*paths {
         &block();
-        ok($msg);
+        ok(1, $msg);
     }
     else {
-        not_ok($msg);
+        ok(0, $msg);
     }
 }
 
@@ -213,10 +213,10 @@ sub fails(&block, $msg?) {
     my $*paths := paths();
     if $*paths {
         &block();
-        not_ok($msg);
+        ok(0, $msg);
     }
     else {
-        ok($msg);
+        ok(1, $msg);
     }
 }
 
@@ -237,23 +237,92 @@ sub plan($count?) {
     say("1..$count");
 }
 
+# Chocoblob example from Graham's book. Exhaustive version. (page 300)
+sub exhaustive_blob() {
+    my @results := ();
+    my $paths := paths();
+
+    if !$paths {
+        # Done processing.
+        ok(@results[0][0] eq "la" &&  @results[0][1] == 1 && @results[0][2] == 2, "exhaustive-blob(), @results[0]");
+        ok(@results[1][0] eq "ny" &&  @results[1][1] == 1 && @results[1][2] == 1, "exhaustive-blob(), @results[1]");
+        ok(@results[2][0] eq "bos" && @results[2][1] == 2 && @results[2][2] == 2, "exhaustive-blob(), @results[2]");
+
+        return 1;
+    }
+
+    my $city := choose($paths, "la", "ny", "bos");
+    my $store := choose($paths, 1, 2);
+    my $box := choose($paths, 1, 2);
+
+    if coin($city, $store, $box) {
+        @results.push: [$city, $store, $box];
+    }
+
+    fail($paths);
+}
+
+# Chocoblob example from Graham's book. Pruned version (with cut). (page 301)
+sub cut_blob() {
+    my @results := ();
+    my $paths := paths();
+
+    if !$paths {
+        # Done processing.
+        ok(@results[0][0] eq "la" &&  @results[0][1] == 1 && @results[0][2] == 2, "cut-blob(), @results[0]");
+        ok(@results[1][0] eq "ny" &&  @results[1][1] == 1 && @results[1][2] == 1, "cut-blob(), @results[1]");
+        ok(@results[2][0] eq "bos" && @results[2][1] == 2 && @results[2][2] == 2, "cut-blob(), @results[2]");
+
+        return 1;
+    }
+
+    my $city := choose($paths, "la", "ny", "bos");
+    mark($paths);
+    my $store := choose($paths, 1, 2);
+    my $box := choose($paths, 1, 2);
+
+    if coin($city, $store, $box) {
+        @results.push: [$city, $store, $box];
+        cut($paths);
+    }
+
+    fail($paths);
+}
+
+sub coin($city, $store, $box) {
+    if ($city eq "la"  && $store == 1 && $box == 2)
+    || ($city eq "ny"  && $store == 1 && $box == 1)
+    || ($city eq "bos" && $store == 2 && $box == 2) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 sub MAIN() {
     my $x := Variable.new;
     $tests := 0;
-    ok("creating empty Variable");
+    ok(1, "creating empty Variable");
 
+    # Test backtracking.
     my $paths := paths();
     if $paths {
-        ok("creating paths");
+        # After initial call.
+        ok(1, "creating paths");
         fail($paths);
     }
     else {
-        ok("backtracking");
+        # After call to fail().
+        ok(1, "backtracking");
     }
+
+    exhaustive_blob();
+    cut_blob();
 
     # Test unification of terms.
     my $atom := Term.from_data("atom");
-    ok("creating atoms");
+    ok(1, "creating atoms");
     unifies($atom, $atom, "unification of atom to itself");
 
     my $other_atom := Term.from_data("atom");
@@ -263,6 +332,7 @@ sub MAIN() {
     not_unifies($atom, $different, "non-unification of unequal atoms");
 
     my $complex := Term.from_data("term", $atom);
+    ok(1, "creating complex terms");
     unifies($complex, $complex, "unification of complex term to itself");
 
     my $other_complex := Term.from_data("term", $other_atom);

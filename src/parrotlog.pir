@@ -20,9 +20,11 @@
     .local pmc cc
     .local pmc chosen
 
+    #say paths
+
     # If we have no options to choose from a previous search has failed.
     if options goto got_options
-    'fail'()
+    'fail'(paths)
   got_options:
     chosen = shift options
 
@@ -32,11 +34,10 @@
     set_addr cc, recurse
     push paths, cc
 
-    say chosen
     .return (chosen)
 
   recurse:
-    .tailcall 'choose'(options :flat)
+    .tailcall 'choose'(paths, options :flat)
 .end
 
 # Signal that choose() has picked an invalid element, and invoke the saved
@@ -45,7 +46,7 @@
     .param pmc paths
     .local pmc cc
 
-    cc = shift paths
+    cc = pop paths
 
   call_cc:
     cc()
@@ -67,6 +68,34 @@
 
   final_failure:
     .return ()
+.end
+
+# Set the mark up to which cut() should prune. We use the sub ref to fail() as
+# the mark, so that fail doesn't have to be modified. Whenever fail() happens
+# upon a mark, it will simply result in a recursive call to itself, which will
+# call the next continuation on the stack.
+.sub 'mark'
+    .param pmc paths
+    .local pmc fail_cc
+
+    fail_cc = get_global 'fail'
+    push paths, fail_cc
+.end
+
+# Prune the search tree up to the mark.
+.sub cut
+    .param pmc paths
+    .local pmc cc
+    .local pmc fail_cc
+
+    fail_cc = get_global 'fail'
+
+  loop:
+    cc = pop paths
+    $I0 = issame cc, fail_cc
+    if $I0 goto done
+    goto loop
+  done:
 .end
 
 # TODO: Implement mark() and cut().
