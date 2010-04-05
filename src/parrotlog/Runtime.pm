@@ -1,62 +1,28 @@
 # Variables and terms. The variable code is largely inspired by the Perl code
 # in this PerlMonks post:  http://www.perlmonks.org/?node_id=193649
-=begin Ref
-
-Ref is a quick and dirty reference class that lets us emulate the references
-used in the Perl code.
-
-=end Ref
-class Ref {
-    has $!value;
-
-    method value($value?) {
-        # XXX: This should really be ``if $value'', but that breaks on the
-        # get_bool() VTABLE method not being implemented in Term, and I can't
-        # figure out how to do that in NQP.
-        if $value ~~ Term {
-            $!value := $value;
-        }
-
-        return $!value;
-    }
-}
-
 =begin Variable
 
 Variable is the internal data structure used for Prolog Variables.
 
 =end Variable
 class Variable {
-    has $!container;
-
-    # Create a new free variable.
-    method free() {
-        my $var := self.new;
-        $var.unbind();
-        return $var;
-    }
+    has $!value;
 
     method value() {
-        return $!container.value;
-    }
-
-    my method container() {
-        return $!container;
+        if $!value ~~ Variable || $!value ~~ Term {
+            return $!value.value;
+        }
+        else {
+            return $!value;
+        }
     }
 
     method bind($other) {
-        pir::die("Attempted to bind bound Variable") if self.value;
+        pir::die("Attempted to bind bound Variable") if $!value;
 
-        if $other ~~ Variable {
-            if $other.bound {
-                $!container.value($other.value);
-            }
-            else {
-                $!container := $other.container;
-            }
-        }
-        elsif $other ~~ Term {
-            $!container.value($other);
+        if $other ~~ Variable
+        || $other ~~ Term {
+            $!value := $other
         }
         else {
             pir::die("Attempted to bind Variable to non-Variable, non-Term");
@@ -65,11 +31,11 @@ class Variable {
 
     # Because ``if $variable.value'' is broken.
     method bound() {
-        return self.value ~~ Term;
+        return $!value ~~ Term || $!value ~~ Variable;
     }
 
     method unbind() {
-        $!container := Ref.new;
+        $!value := Undef;
     }
 }
 
@@ -119,6 +85,8 @@ class Term {
 
         return @!args;
     }
+
+    method value() { return self; }
 }
 
 sub unify($paths, $x, $y) {
@@ -145,8 +113,6 @@ sub unify($paths, $x, $y) {
 
         return 1;
     }
-    # BUG: Binding a variable to a value represents a choice point, so we have
-    # to save a continuation and undo the binding on failure.
     elsif ($x ~~ Variable && $y ~~ Term)
     ||    ($x ~~ Term && $y ~~ Variable) {
         # To simplify control flow.
@@ -159,32 +125,40 @@ sub unify($paths, $x, $y) {
         my $var := $x;
         my $term := $y;
 
-        diag("var/term unification");
         if $var.bound {
-            diag("var bound");
             unify($paths, $var.value, $term);
         }
         else {
-            diag("var unbound");
-            $var.bind($term);
+            # The binding of a Variable has to be undone on backtracking.
+            if choicepoint($paths) {
+                $var.unbind;
+                fail($paths);
+            }
+            else {
+                $var.bind($term);
+            }
         }
     }
     elsif $x ~~ Variable && $y ~~ Variable {
-        diag("var/var unification");
         if $x.bound && $y.bound {
-            diag("both bound");
             unify($paths, $x.value, $y.value);
         }
         # One or both unbound.
         else {
-            diag("> 0 unbound");
             if $x.bound {
                 my $tmp := $x;
                 $x := $y;
                 $y := $tmp;
             }
 
-            $x.bind($y);
+            # The binding of a Variable has to be undone on backtracking.
+            if choicepoint($paths) {
+                $x.unbind;
+                fail($paths);
+            }
+            else {
+                $x.bind($y);
+            }
         }
     }
     else {
@@ -275,48 +249,59 @@ sub MAIN() {
     # Test unification of terms.
     my $atom := Term.from_data("atom");
     ok(1, "creating atoms");
-    unifies($atom, $atom, "unification of atom to itself");
-
     my $other_atom := Term.from_data("atom");
-    unifies($atom, $other_atom, "unification of atom to identical atom");
-
     my $different := Term.from_data("different");
-    not_unifies($atom, $different, "non-unification of unequal atoms");
-
     my $complex := Term.from_data("term", $atom);
     ok(1, "creating complex terms");
-    unifies($complex, $complex, "unification of complex term to itself");
-
     my $other_complex := Term.from_data("term", $other_atom);
-    unifies($complex, $other_complex, "unification of complex term to identical complex term");
-
     my $different_complex := Term.from_data("different", $atom);
+
+    unifies($atom, $atom, "unification of atom to itself");
+    unifies($atom, $other_atom, "unification of atom to identical atom");
+    not_unifies($atom, $different, "non-unification of unequal atoms");
+    unifies($complex, $complex, "unification of complex term to itself");
+    unifies($complex, $other_complex, "unification of complex term to identical complex term");
     not_unifies($complex, $different_complex, "non-unification of different complex terms");
 
     # Test unification of variables.
-    my $free := Variable.free;
+    my $free := Variable.new;
     ok(1, "creating free variable");
+    ok(!$free.value, "value of free variable");
+    ok(!$free.bound, "bound state of free variable");
 
     unifies($free, $atom, "unification of free variable to atom");
+    ok($free.bound, "bound state of unified variable");
     ok($free.value.functor eq $atom.functor, "value after unification");
     unifies($free, $other_atom, "unification after binding");
 
     $paths := paths();
     if $paths {
-        my $x := Variable.free;
-        my $y := Variable.free;
-        my $z := Variable.free;
+        my $x := Variable.new;
+        my $y := Variable.new;
+        my $z := Variable.new;
 
         unify($paths, $x, $y);
         unify($paths, $y, $z);
         unify($paths, $z, $atom);
-        # XXX: Doesn't work.
-        #ok($x.value.functor eq $z.value.functor, "transitive unification");
+
+        ok($x.value.functor eq $z.value.functor, "transitive unification");
     }
     else {
+        ok(0, "transitive unification - backtracked too far");
     }
 
-    # TODO: Make sure failure undoes bindings.
+    $paths := paths();
+    if $paths {
+        my $x := Variable.new;
+        my $y := choose($paths, $atom, $different);
+        unify($paths, $x, $y);
+        fail($paths) if $x.value.functor eq "atom";
+
+        ok($x.value.functor eq "different", "backtracking over unification");
+    }
+    else {
+        ok(0, "backtracking over unification - backtracked too far");
+    }
 
     plan();
 }
@@ -324,6 +309,7 @@ sub MAIN() {
 # Chocoblob example from Graham's book. Exhaustive version. (page 300)
 sub exhaustive_blob() {
     my @results := ();
+    my $pings := 0;
     my $paths := paths();
 
     if !$paths {
@@ -331,6 +317,7 @@ sub exhaustive_blob() {
         ok(@results[0][0] eq "la" &&  @results[0][1] == 1 && @results[0][2] == 2, "exhaustive-blob(), @results[0]");
         ok(@results[1][0] eq "ny" &&  @results[1][1] == 1 && @results[1][2] == 1, "exhaustive-blob(), @results[1]");
         ok(@results[2][0] eq "bos" && @results[2][1] == 2 && @results[2][2] == 2, "exhaustive-blob(), @results[2]");
+        ok($pings == 12, "exhaustive-blob(), number of values checked");
 
         return 1;
     }
@@ -338,6 +325,8 @@ sub exhaustive_blob() {
     my $city := choose($paths, "la", "ny", "bos");
     my $store := choose($paths, 1, 2);
     my $box := choose($paths, 1, 2);
+
+    $pings++;
 
     if coin($city, $store, $box) {
         @results.push: [$city, $store, $box];
@@ -349,6 +338,7 @@ sub exhaustive_blob() {
 # Chocoblob example from Graham's book. Pruned version (with cut). (page 301)
 sub cut_blob() {
     my @results := ();
+    my $pings := 0;
     my $paths := paths();
 
     if !$paths {
@@ -356,6 +346,7 @@ sub cut_blob() {
         ok(@results[0][0] eq "la" &&  @results[0][1] == 1 && @results[0][2] == 2, "cut-blob(), @results[0]");
         ok(@results[1][0] eq "ny" &&  @results[1][1] == 1 && @results[1][2] == 1, "cut-blob(), @results[1]");
         ok(@results[2][0] eq "bos" && @results[2][1] == 2 && @results[2][2] == 2, "cut-blob(), @results[2]");
+        ok($pings == 7, "cut-blob(), number of values checked");
 
         return 1;
     }
@@ -364,6 +355,8 @@ sub cut_blob() {
     mark($paths);
     my $store := choose($paths, 1, 2);
     my $box := choose($paths, 1, 2);
+
+    $pings++;
 
     if coin($city, $store, $box) {
         @results.push: [$city, $store, $box];

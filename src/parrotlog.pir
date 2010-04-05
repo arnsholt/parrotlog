@@ -20,19 +20,14 @@
     .local pmc cc
     .local pmc chosen
 
-    #say paths
-
     # If we have no options to choose from a previous search has failed.
     if options goto got_options
     'fail'(paths)
   got_options:
     chosen = shift options
 
-    # Create a continuation for our current state and save it on the stack of
-    # active choice points.
-    cc = new 'Continuation'
-    set_addr cc, recurse
-    push paths, cc
+    $I0 = 'choicepoint'(paths)
+    if $I0 goto recurse
 
     .return (chosen)
 
@@ -47,8 +42,6 @@
     .local pmc cc
 
     cc = pop paths
-
-  call_cc:
     cc()
 .end
 
@@ -58,16 +51,29 @@
     .local pmc cc
     .local pmc stack
 
-    cc = new 'Continuation'
-    set_addr cc, final_failure
-
     stack = new 'ResizablePMCArray'
-    push stack, cc
+    $I0 = 'choicepoint'(stack)
+    if $I0 goto final_failure
 
     .return (stack)
 
   final_failure:
     .return ()
+.end
+
+# Store a choicepoint on the stack. Returns 0 on initial call, 1 when
+# backtracking.
+.sub 'choicepoint'
+    .param pmc paths
+    .local pmc cc
+
+    cc = new 'Continuation'
+    set_addr cc, failure
+    push paths, cc
+
+    .return (0)
+  failure:
+    .return (1)
 .end
 
 # Set the mark up to which cut() should prune. We use the sub ref to fail() as
@@ -90,15 +96,12 @@
 
     fail_cc = get_global 'fail'
 
+  # Pop elements off the stack until we find a mark.
   loop:
     cc = pop paths
     $I0 = issame cc, fail_cc
-    if $I0 goto done
-    goto loop
-  done:
+    unless $I0 goto loop
 .end
-
-# TODO: Implement mark() and cut().
 
 .include 'src/gen/parrotlog-grammar.pir'
 .include 'src/gen/parrotlog-actions.pir'
@@ -117,5 +120,6 @@
     #.return ($P1)
 
     'MAIN'()
+
     .return ()
 .end
