@@ -22,11 +22,27 @@ INIT {
     Parrotlog::Grammar.O(':assoc<unary> :uassoc<left>', 'yf');
 }
 
-proto token prolog_text { <...> }
-rule prolog_text:type<directive> { <term> '.' }
-rule prolog_text:type<clause> { }
+# Prolog text: section 6.2.1
+token prolog_text { [ <directive> | <clause> ]* }
 
+# Directives: section 6.2.1.1
+token directive { <directive_term> <.end> }
+# TODO: The term in directive term has priority 1201.
+token directive_term { <term> }
+
+# Clauses: section 6.2.1.2
+token clause { <clause_term> <.end> }
+# TODO: The term in clause term has priority 1201.
+# TODO: The principal functor of term cannot be :-
+token clause_term { <term> }
+
+# Data: section 6.2.2
+# TODO: The term in read term has priority 1201.
+token read_term { <.layout_text>? <term> <.end> }
+
+# Terms: section 6.3
 proto token term { <...> }
+# Constants: section 6.3.1
 
 rule atom:sym<[ ]> { <sym> }
 rule atom:sym<{ }> { <sym> }
