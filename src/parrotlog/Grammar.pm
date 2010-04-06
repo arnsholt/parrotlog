@@ -41,11 +41,42 @@ token clause_term { <term> }
 token read_term { <.layout_text>? <term> <.end> }
 
 # Terms: section 6.3
-proto token term { <...> }
+#proto token term { <...> } # Already defined in HLL::Grammar
 # Constants: section 6.3.1
+# Numbers: section 6.3.1.1
+# TODO: Priority should be 0.
+token term:sym<integer> { '-'? <integer> }
+token term:sym<float> { '-'? <float_number> }
 
-rule atom:sym<[ ]> { <sym> }
-rule atom:sym<{ }> { <sym> }
+# Negative numbers: section 6.3.1.2
+# TODO
+
+# Atoms: section 6.3.1.3
+# TODO: Priority is 0.
+token term:sym<atom> { <!operator> <atom> }
+# TODO: Priority is 1201.
+token term:sym<op> { <?operator> <atom> }
+token term:sym<name> { <name> }
+token term:sym<[ ]> { <sym> }
+token term:sym<{ }> { <sym> }
+
+# Variables: section 6.3.2
+# TODO: Priority is 0.
+token term:sym<variable> { <variable> }
+
+# Compound terms: section 6.3.3
+token term:sym<compound> { <atom> <.open_ct> <arg_list> <.close> }
+token arg_list { <EXPR>**<comma> }
+
+# Expressions: section 6.3.3.1
+# TODO: I have to figure out how to interface with the NQP operator precedence
+# parser.
+token infix:sym<:->  { <sym> <O('xfx')> }
+#token infix:sym<-->> { <sym> <O('xfx')> }
+token prefix:sym<:-> { <sym> <O('fx')> }
+token prefix:sym<?-> { <sym> <O('fx')> }
+
+# Operators: section 6.3.4.3
 
 # Tokens: section 6.4
 token name { <.ws> <name_token> }
