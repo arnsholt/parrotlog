@@ -107,6 +107,7 @@
 .include 'src/gen/parrotlog-actions.pir'
 .include 'src/gen/parrotlog-compiler.pir'
 .include 'src/gen/parrotlog-runtime.pir'
+.include 'src/gen/parrotlog-coretest.pir'
 
 # To make it easy to test bits and pieces of the implementation, I cheat.
 # MAIN() is defined in Runtime.pm does the various bits of testing.
@@ -119,7 +120,10 @@
     #$P1 = $P0.'command_line'(args)
     #.return ($P1)
 
-    'MAIN'()
+    .local pmc coretest
+
+    coretest = get_hll_global ['Coretest'], 'coretest'
+    coretest()
 
     .return ()
 .end
