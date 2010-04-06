@@ -2,6 +2,7 @@
 Makefile
 parrot/
 parrot_install/
+# Ignore any -file- named parrotlog, but not a directory.
 parrotlog
 !parrotlog/
 *.o
