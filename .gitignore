@@ -3,6 +3,7 @@ Makefile
 parrot/
 parrot_install/
 parrotlog
+!parrotlog/
 *.o
 # This exclusion should perhaps be modified if we add C code.
 *.c
