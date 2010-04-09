@@ -13,6 +13,7 @@ token TOP {
 }
 
 INIT {
+    # Operator precedence stuff for the associativity of operators.
     Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>', 'fx');
     Parrotlog::Grammar.O(':assoc<unary> :uassoc<right>', 'fy');
     Parrotlog::Grammar.O(':assoc<non>', 'xfx');
@@ -20,6 +21,22 @@ INIT {
     Parrotlog::Grammar.O(':assoc<left>', 'yfx');
     Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>', 'xf');
     Parrotlog::Grammar.O(':assoc<unary> :uassoc<left>', 'yf');
+
+    # Prolog has precedence levels from 0 to 1201. I'm not going to type them
+    # all in by hand.
+    # TODO: When we actually support defining custom operators, we should
+    # probably generate only the precedence levels we need, to avoid bogging
+    # down NQP with too many of them.
+    my $i := 0;
+    while $i <= 1201 {
+        my $precstr :=
+            $i < 10   ?? "000$i" !!
+            $i < 100  ?? "00$i" !!
+            $i < 1000 ?? "0$i" !!
+                         "$i";
+        Parrotlog::Grammar.O(":prec<$precstr>", $i);
+        $i++;
+    }
 }
 
 # Prolog text: section 6.2.1
@@ -49,16 +66,16 @@ token term:sym<integer> { '-'? <integer> }
 token term:sym<float> { '-'? <float_number> }
 
 # Negative numbers: section 6.3.1.2
-# TODO
+# Handled inline in the integer/float terms.
 
 # Atoms: section 6.3.1.3
 # TODO: Priority is 0.
 token term:sym<atom> { <!operator> <atom> }
-# TODO: Priority is 1201.
-token term:sym<op> { <?operator> <atom> }
-token term:sym<name> { <name> }
-token term:sym<[ ]> { <sym> }
-token term:sym<{ }> { <sym> }
+
+proto token atom { <...> }
+token atom:sym<name> { <name> }
+token atom:sym<empty_list> { <.open_list> <.close_list> }
+token atom:sym<curly_brackets> { <.open_curly> <.close_curly> }
 
 # Variables: section 6.3.2
 # TODO: Priority is 0.
@@ -69,14 +86,51 @@ token term:sym<compound> { <atom> <.open_ct> <arg_list> <.close> }
 token arg_list { <EXPR>**<comma> }
 
 # Expressions: section 6.3.3.1
-# TODO: I have to figure out how to interface with the NQP operator precedence
-# parser.
-token infix:sym<:->  { <sym> <O('xfx')> }
-#token infix:sym<-->> { <sym> <O('xfx')> }
-token prefix:sym<:-> { <sym> <O('fx')> }
-token prefix:sym<?-> { <sym> <O('fx')> }
 
 # Operators: section 6.3.4.3
+# TODO: I have to figure out how to interface with the NQP operator precedence
+# parser.
+# TODO: Precedence levels.
+token infix:sym<:->       { <sym> <O('xfx')> }
+token infix:sym<< --> >>  { <sym> <O('xfx')> }
+token prefix:sym<:->      { <sym> <O('fx')> }
+token prefix:sym<?->      { <sym> <O('fx')> }
+token infix:sym<;>        { <sym> <O('xfy')> }
+token infix:sym<< -> >>   { <sym> <O('xfy')> }
+token infix:sym<,>        { <sym> <O('xfy')> }
+token infix:sym<=>        { <sym> <O('xfx')> }
+token infix:sym<\\=>      { <sym> <O('xfx')> }
+token infix:sym<==>       { <sym> <O('xfx')> }
+token infix:sym<\\==>     { <sym> <O('xfx')> }
+token infix:sym<@<>       { <sym> <O('xfx')> }
+token infix:sym<@=<>      { <sym> <O('xfx')> }
+token infix:sym<< @> >>   { <sym> <O('xfx')> }
+token infix:sym<< @>= >>  { <sym> <O('xfx')> }
+token infix:sym<=..>      { <sym> <O('xfx')> }
+token infix:sym<is>       { <sym> <O('xfx')> }
+token infix:sym<=:=>      { <sym> <O('xfx')> }
+token infix:sym<=\\=>     { <sym> <O('xfx')> }
+token infix:sym< < >      { <sym> <O('xfx')> }
+token infix:sym<=<>       { <sym> <O('xfx')> }
+token infix:sym<< > >>    { <sym> <O('xfx')> }
+token infix:sym<< >= >>   { <sym> <O('xfx')> }
+token infix:sym<+>        { <sym> <O('yfx')> }
+token infix:sym<->        { <sym> <!integer> <O('yfx')> }
+token infix:sym</\\>      { <sym> <O('yfx')> }
+token infix:sym<\\/>      { <sym> <O('yfx')> }
+token infix:sym<*>        { <sym> <O('yfx')> }
+token infix:sym</>        { <sym> <O('yfx')> }
+token infix:sym<//>       { <sym> <O('yfx')> }
+token infix:sym<rem>      { <sym> <O('yfx')> }
+token infix:sym<mod>      { <sym> <O('yfx')> }
+token infix:sym< << >     { <sym> <O('yfx')> }
+token infix:sym<<< >> >>> { <sym> <O('yfx')> }
+token infix:sym<**>       { <sym> <O('xfx')> }
+token infix:sym<^>        { <sym> <O('xfy')> }
+token prefix:sym<->       { <sym> <O('fy')> }
+token prefix:sym<\\>      { <sym> <O('fy')> }
+token infix:sym<@>        { <sym> <O('xfx')> }
+token infix:sym<:>        { <sym> <O('xfx')> }
 
 # Tokens: section 6.4
 token name { <.ws> <name_token> }
