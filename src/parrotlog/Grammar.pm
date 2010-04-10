@@ -14,19 +14,20 @@ token TOP {
 
 INIT {
     # Operator precedence stuff for the associativity of operators.
-    Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>', 'fx');
-    Parrotlog::Grammar.O(':assoc<unary> :uassoc<right>', 'fy');
-    Parrotlog::Grammar.O(':assoc<non>', 'xfx');
-    Parrotlog::Grammar.O(':assoc<right>', 'xfy');
-    Parrotlog::Grammar.O(':assoc<left>', 'yfx');
-    Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>', 'xf');
-    Parrotlog::Grammar.O(':assoc<unary> :uassoc<left>', 'yf');
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>',    'fx');
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<right>',  'fy');
+    Parrotlog::Grammar.O(':assoc<non>',                  'xfx');
+    Parrotlog::Grammar.O(':assoc<right>',                'xfy');
+    Parrotlog::Grammar.O(':assoc<left>',                 'yfx');
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>',   'xf');
+    Parrotlog::Grammar.O(':assoc<unary> :uassoc<left>',  'yf');
 
     # Prolog has precedence levels from 0 to 1201. I'm not going to type them
     # all in by hand.
     # TODO: When we actually support defining custom operators, we should
     # probably generate only the precedence levels we need, to avoid bogging
-    # down NQP with too many of them.
+    # down NQP with too many of them. For on-the-fly generation of rules, see
+    # the Rakduo source.
     my $i := 0;
     while $i <= 1201 {
         my $precstr :=
@@ -91,46 +92,46 @@ token arg_list { <EXPR>**<comma> }
 # TODO: I have to figure out how to interface with the NQP operator precedence
 # parser.
 # TODO: Precedence levels.
-token infix:sym<:->       { <sym> <O('xfx')> }
-token infix:sym<< --> >>  { <sym> <O('xfx')> }
-token prefix:sym<:->      { <sym> <O('fx')> }
-token prefix:sym<?->      { <sym> <O('fx')> }
-token infix:sym<;>        { <sym> <O('xfy')> }
-token infix:sym<< -> >>   { <sym> <O('xfy')> }
-token infix:sym<,>        { <sym> <O('xfy')> }
-token infix:sym<=>        { <sym> <O('xfx')> }
-token infix:sym<\\=>      { <sym> <O('xfx')> }
-token infix:sym<==>       { <sym> <O('xfx')> }
-token infix:sym<\\==>     { <sym> <O('xfx')> }
-token infix:sym<@<>       { <sym> <O('xfx')> }
-token infix:sym<@=<>      { <sym> <O('xfx')> }
-token infix:sym<< @> >>   { <sym> <O('xfx')> }
-token infix:sym<< @>= >>  { <sym> <O('xfx')> }
-token infix:sym<=..>      { <sym> <O('xfx')> }
-token infix:sym<is>       { <sym> <O('xfx')> }
-token infix:sym<=:=>      { <sym> <O('xfx')> }
-token infix:sym<=\\=>     { <sym> <O('xfx')> }
-token infix:sym< < >      { <sym> <O('xfx')> }
-token infix:sym<=<>       { <sym> <O('xfx')> }
-token infix:sym<< > >>    { <sym> <O('xfx')> }
-token infix:sym<< >= >>   { <sym> <O('xfx')> }
-token infix:sym<+>        { <sym> <O('yfx')> }
-token infix:sym<->        { <sym> <!integer> <O('yfx')> }
-token infix:sym</\\>      { <sym> <O('yfx')> }
-token infix:sym<\\/>      { <sym> <O('yfx')> }
-token infix:sym<*>        { <sym> <O('yfx')> }
-token infix:sym</>        { <sym> <O('yfx')> }
-token infix:sym<//>       { <sym> <O('yfx')> }
-token infix:sym<rem>      { <sym> <O('yfx')> }
-token infix:sym<mod>      { <sym> <O('yfx')> }
-token infix:sym< << >     { <sym> <O('yfx')> }
-token infix:sym<<< >> >>> { <sym> <O('yfx')> }
-token infix:sym<**>       { <sym> <O('xfx')> }
-token infix:sym<^>        { <sym> <O('xfy')> }
-token prefix:sym<->       { <sym> <O('fy')> }
-token prefix:sym<\\>      { <sym> <O('fy')> }
-token infix:sym<@>        { <sym> <O('xfx')> }
-token infix:sym<:>        { <sym> <O('xfx')> }
+token infix:sym<:->           { <sym> <O('xfx')> }
+token infix:sym<< --> >>      { <sym> <O('xfx')> }
+token prefix:sym<:->          { <sym> <O('fx')> }
+token prefix:sym<?->          { <sym> <O('fx')> }
+token infix:sym<;>            { <sym> <O('xfy')> }
+token infix:sym<< -> >>       { <sym> <O('xfy')> }
+token infix:sym<,>            { <sym> <O('xfy')> }
+token infix:sym<=>            { <sym> <O('xfx')> }
+token infix:sym<\\=>          { <sym> <O('xfx')> }
+token infix:sym<==>           { <sym> <O('xfx')> }
+token infix:sym<\\==>         { <sym> <O('xfx')> }
+token infix:sym<<@<>>         { <sym> <O('xfx')> }
+token infix:sym<<@=<>>        { <sym> <O('xfx')> }
+token infix:sym<< @> >>       { <sym> <O('xfx')> }
+token infix:sym<< @>= >>      { <sym> <O('xfx')> }
+token infix:sym<=..>          { <sym> <O('xfx')> }
+token infix:sym<is>           { <sym> <O('xfx')> }
+token infix:sym<=:=>          { <sym> <O('xfx')> }
+token infix:sym<=\\=>         { <sym> <O('xfx')> }
+token infix:sym<< < >>        { <sym> <O('xfx')> }
+token infix:sym<=<>           { <sym> <O('xfx')> }
+token infix:sym<< > >>        { <sym> <O('xfx')> }
+token infix:sym<< >= >>       { <sym> <O('xfx')> }
+token infix:sym<+>            { <sym> <O('yfx')> }
+token infix:sym<->            { <sym> <!integer> <O('yfx')> }
+token infix:sym</\\>          { <sym> <O('yfx')> }
+token infix:sym<\\/>          { <sym> <O('yfx')> }
+token infix:sym<*>            { <sym> <O('yfx')> }
+token infix:sym</>            { <sym> <O('yfx')> }
+token infix:sym<//>           { <sym> <O('yfx')> }
+token infix:sym<rem>          { <sym> <O('yfx')> }
+token infix:sym<mod>          { <sym> <O('yfx')> }
+token infix:sym<<< << >>>     { <sym> <O('yfx')> }
+token infix:sym<<< >> >>>     { <sym> <O('yfx')> }
+token infix:sym<**>           { <sym> <O('xfx')> }
+token infix:sym<^>            { <sym> <O('xfy')> }
+token prefix:sym<->           { <sym> <O('fy')> }
+token prefix:sym<\\>          { <sym> <O('fy')> }
+token infix:sym<@>            { <sym> <O('xfx')> }
+token infix:sym<:>            { <sym> <O('xfx')> }
 
 # Tokens: section 6.4
 token name { <.ws> <name_token> }
@@ -270,8 +271,8 @@ token term:sym<integer> { <integer> }
 token term:sym<quote> { <quote> }
 
 proto token quote { <...> }
-token quote:sym<'> { <?[']> <quote_EXPR: ':q'> } # For vi: '
-token quote:sym<"> { <?["]> <quote_EXPR: ':qq'> }
+token quote:sym<'> { <?[']> <quote_EXPR: ':q'> } # For vi: ' ]> }
+token quote:sym<"> { <?["]> <quote_EXPR: ':qq'> } # For vi: " ]> }
 
 # TODO: Operators. ISO Prolog allows for user defined operators. That should
 # probably be implemented using nqp's extendable grammar features.
