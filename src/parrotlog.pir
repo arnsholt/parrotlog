@@ -42,7 +42,7 @@
     .local pmc cc
 
     cc = pop paths
-    cc()
+    .tailcall cc()
 .end
 
 # Create a new stack to backtrack over. This makes which continuations belong
