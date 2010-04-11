@@ -10,7 +10,7 @@ grammar Parrotlog::Grammar is HLL::Grammar;
 token TOP {
     <?DEBUG>
     <prolog_text>
-    [ <.ws>? $ || <.panic: "Syntax error"> ]
+    [ <.ws> $ || <.panic: "Syntax error"> ]
 }
 
 INIT {
@@ -29,8 +29,10 @@ INIT {
     # probably generate only the precedence levels we need, to avoid bogging
     # down NQP with too many of them. For on-the-fly generation of rules, see
     # the Rakduo source.
-    my $i := 0;
-    while $i <= 1201 {
+    # XXX: Prolog has lower priority = binds tighter, while I think NQP has
+    # higher precedence = binds tighter. That'll have to be fixed.
+    my $i := 1;
+    while $i <= 1200 {
         my $precstr :=
             $i < 10   ?? "000$i" !!
             $i < 100  ?? "00$i" !!
@@ -48,17 +50,17 @@ token prolog_text { [ <directive> | <clause> ]* }
 token directive { <directive_term> <.end> }
 # TODO: The principal functor of the term is ':-'
 # TODO: The term in directive term has priority 1201.
-token directive_term { <term> }
+token directive_term { <EXPR> }
 
 # Clauses: section 6.2.1.2
 token clause { <clause_term> <.end> }
 # TODO: The term in clause term has priority 1201.
 # TODO: The principal functor of the term is not ':-'
-token clause_term { <term> }
+token clause_term { <EXPR> }
 
 # Data: section 6.2.2
 # TODO: The term in read term has priority 1201.
-token read_term { <.layout_text>? <term> <.end> }
+token read_term { <.ws> <term> <.end> }
 
 # Terms: section 6.3
 #proto token term { <...> } # Already defined in HLL::Grammar
@@ -96,46 +98,46 @@ token arg_list { <EXPR>**<comma> }
 # TODO: I have to figure out how to interface with the NQP operator precedence
 # parser.
 # TODO: Precedence levels.
-token infix:sym<:->           { <sym> <O('xfx')> }
-token infix:sym<< --> >>      { <sym> <O('xfx')> }
-token prefix:sym<:->          { <sym> <O('fx')> }
-token prefix:sym<?->          { <sym> <O('fx')> }
-token infix:sym<;>            { <sym> <O('xfy')> }
-token infix:sym<< -> >>       { <sym> <O('xfy')> }
-token infix:sym<,>            { <sym> <O('xfy')> }
-token infix:sym<=>            { <sym> <O('xfx')> }
-token infix:sym<\\=>          { <sym> <O('xfx')> }
-token infix:sym<==>           { <sym> <O('xfx')> }
-token infix:sym<\\==>         { <sym> <O('xfx')> }
-token infix:sym<<@<>>         { <sym> <O('xfx')> }
-token infix:sym<<@=<>>        { <sym> <O('xfx')> }
-token infix:sym<< @> >>       { <sym> <O('xfx')> }
-token infix:sym<< @>= >>      { <sym> <O('xfx')> }
-token infix:sym<=..>          { <sym> <O('xfx')> }
-token infix:sym<is>           { <sym> <O('xfx')> }
-token infix:sym<=:=>          { <sym> <O('xfx')> }
-token infix:sym<=\\=>         { <sym> <O('xfx')> }
-token infix:sym<< < >>        { <sym> <O('xfx')> }
-token infix:sym<=<>           { <sym> <O('xfx')> }
-token infix:sym<< > >>        { <sym> <O('xfx')> }
-token infix:sym<< >= >>       { <sym> <O('xfx')> }
-token infix:sym<+>            { <sym> <O('yfx')> }
-token infix:sym<->            { <sym> <!integer> <O('yfx')> }
-token infix:sym</\\>          { <sym> <O('yfx')> }
-token infix:sym<\\/>          { <sym> <O('yfx')> }
-token infix:sym<*>            { <sym> <O('yfx')> }
-token infix:sym</>            { <sym> <O('yfx')> }
-token infix:sym<//>           { <sym> <O('yfx')> }
-token infix:sym<rem>          { <sym> <O('yfx')> }
-token infix:sym<mod>          { <sym> <O('yfx')> }
-token infix:sym<<< << >>>     { <sym> <O('yfx')> }
-token infix:sym<<< >> >>>     { <sym> <O('yfx')> }
-token infix:sym<**>           { <sym> <O('xfx')> }
-token infix:sym<^>            { <sym> <O('xfy')> }
-token prefix:sym<->           { <sym> <O('fy')> }
-token prefix:sym<\\>          { <sym> <O('fy')> }
-token infix:sym<@>            { <sym> <O('xfx')> }
-token infix:sym<:>            { <sym> <O('xfx')> }
+token infix:sym<:->           { <sym> <O('xfx 1200')> }
+token infix:sym<< --> >>      { <sym> <O('xfx 1200')> }
+token prefix:sym<:->          { <sym> <O('fx  1200')> }
+token prefix:sym<?->          { <sym> <O('fx  1200')> }
+token infix:sym<;>            { <sym> <O('xfy 1100')> }
+token infix:sym<< -> >>       { <sym> <O('xfy 1050')> }
+token infix:sym<,>            { <sym> <O('xfy 1000')> }
+token infix:sym<=>            { <sym> <O('xfx  700')> }
+token infix:sym<\\=>          { <sym> <O('xfx  700')> }
+token infix:sym<==>           { <sym> <O('xfx  700')> }
+token infix:sym<\\==>         { <sym> <O('xfx  700')> }
+token infix:sym<<@<>>         { <sym> <O('xfx  700')> }
+token infix:sym<<@=<>>        { <sym> <O('xfx  700')> }
+token infix:sym<< @> >>       { <sym> <O('xfx  700')> }
+token infix:sym<< @>= >>      { <sym> <O('xfx  700')> }
+token infix:sym<=..>          { <sym> <O('xfx  700')> }
+token infix:sym<is>           { <sym> <O('xfx  700')> }
+token infix:sym<=:=>          { <sym> <O('xfx  700')> }
+token infix:sym<=\\=>         { <sym> <O('xfx  700')> }
+token infix:sym<< < >>        { <sym> <O('xfx  700')> }
+token infix:sym<=<>           { <sym> <O('xfx  700')> }
+token infix:sym<< > >>        { <sym> <O('xfx  700')> }
+token infix:sym<< >= >>       { <sym> <O('xfx  700')> }
+token infix:sym<+>            { <sym> <O('yfx  500')> }
+token infix:sym<->            { <sym> <!integer> <O('yfx 500')> }
+token infix:sym</\\>          { <sym> <O('yfx  500')> }
+token infix:sym<\\/>          { <sym> <O('yfx  500')> }
+token infix:sym<*>            { <sym> <O('yfx  400')> }
+token infix:sym</>            { <sym> <O('yfx  400')> }
+token infix:sym<//>           { <sym> <O('yfx  400')> }
+token infix:sym<rem>          { <sym> <O('yfx  400')> }
+token infix:sym<mod>          { <sym> <O('yfx  400')> }
+token infix:sym<<< << >>>     { <sym> <O('yfx  400')> }
+token infix:sym<<< >> >>>     { <sym> <O('yfx  400')> }
+token infix:sym<**>           { <sym> <O('xfx  200')> }
+token infix:sym<^>            { <sym> <O('xfy  200')> }
+token prefix:sym<->           { <sym> <O('fy   200')> }
+token prefix:sym<\\>          { <sym> <O('fy   200')> }
+token infix:sym<@>            { <sym> <O('xfx  100')> }
+token infix:sym<:>            { <sym> <O('xfx   50')> }
 
 # Compound terms - list notation: section 6.3.5
 token term:<list> { <.open_list> <items> <.close_list> }
@@ -164,23 +166,24 @@ token token:sym<head_tail_separator> { <head_tail_separator_token> }
 token token:sym<comma> { <comma_token> }
 token token:sym<end> { <end_token> }
 
-token name { <.ws>? <name_token> }
-token variable { <.ws>? <variable_token> }
-token integer { <.ws>? <integer_token> }
-token float { <.ws>? <float_token> }
+token name        { <.ws> <name_token> }
+token variable    { <.ws> <variable_token> }
+token integer     { <.ws> <integer_token> }
+token float       { <.ws> <float_token> }
 # TODO: Char code list.
-token open_ct { <.ws>? <open_token> }
-token close { <.ws>? <close_token> }
-token open_list { <.ws>? <open_list_token> }
-token close_list { <.ws>? <close_list_token> }
-token open_curly { <.ws>? <open_curly_token> }
-token close_curly { <.ws>? <close_curly_token> }
-token ht_sep { <.ws>? <head_tail_separator_token> }
-token comma { <.ws>? <comma_token> }
-token end { <.ws>? <end_token> }
+token open_ct     { <.ws> <open_token> }
+token close       { <.ws> <close_token> }
+token open_list   { <.ws> <open_list_token> }
+token close_list  { <.ws> <close_list_token> }
+token open_curly  { <.ws> <open_curly_token> }
+token close_curly { <.ws> <close_curly_token> }
+token ht_sep      { <.ws> <head_tail_separator_token> }
+token comma       { <.ws> <comma_token> }
+token end         { <.ws> <end_token> }
 
 # Layout text, section 6.4.1
-token ws { <.layout_text>+ } # Layout text separates stuff, so we set <ws> to that
+# Layout text separates stuff, so we set <ws> to that
+token ws { <.layout_text>* }
 token layout_text { [ <.layout_char> | <.comment>  ]+ }
 proto token comment { <...> }
 token comment:sym<line> { <.line_comment_char> \N* \n  }
