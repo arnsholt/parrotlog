@@ -45,8 +45,8 @@ token read_term { <.layout_text>? <term> <.end> }
 # Constants: section 6.3.1
 # Numbers: section 6.3.1.1
 # TODO: Priority should be 0.
-token term:sym<integer> { '-'? <integer> }
-token term:sym<float> { '-'? <float_number> }
+token term:sym<integer> { $<neg>=['-'?] <integer> }
+token term:sym<float> { $<neg>=['-'?] <float_number> }
 
 # Negative numbers: section 6.3.1.2
 # TODO
@@ -72,7 +72,7 @@ token arg_list { <EXPR>**<comma> }
 # TODO: I have to figure out how to interface with the NQP operator precedence
 # parser.
 token infix:sym<:->  { <sym> <O('xfx')> }
-#token infix:sym<-->> { <sym> <O('xfx')> }
+token infix:sym<< --> >> { <sym> <O('xfx')> }
 token prefix:sym<:-> { <sym> <O('fx')> }
 token prefix:sym<?-> { <sym> <O('fx')> }
 
