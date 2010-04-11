@@ -64,8 +64,8 @@ token read_term { <.layout_text>? <term> <.end> }
 # Constants: section 6.3.1
 # Numbers: section 6.3.1.1
 # TODO: Priority should be 0.
-token term:sym<integer> { '-'? <integer> }
-token term:sym<float> { '-'? <float_number> }
+token term:sym<integer> { $<neg>=['-'?] <integer> }
+token term:sym<float> { $<neg>=['-'?] <float_number> }
 
 # Negative numbers: section 6.3.1.2
 # Handled inline in the integer/float terms.
