@@ -115,10 +115,10 @@
 .sub 'main' :main
     .param pmc args
 
-    #$P0 = compreg 'Parrotlog'
-    ## Cannot tailcall here. (TT #1029)
-    #$P1 = $P0.'command_line'(args)
-    #.return ($P1)
+    $P0 = compreg 'Parrotlog'
+    # Cannot tailcall here. (TT #1029)
+    $P1 = $P0.'command_line'(args)
+    .return ($P1)
 
     .local pmc coretest
 

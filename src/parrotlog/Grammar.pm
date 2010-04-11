@@ -8,8 +8,9 @@ grammar Parrotlog::Grammar is HLL::Grammar;
 
 # XXX: nqp-rx doesn't like grammar items with -, so we use _ instead.
 token TOP {
-    <prolog_text>*
-    [ $ || <.panic: "Syntax error"> ]
+    <?DEBUG>
+    <prolog_text>
+    [ <.ws>? $ || <.panic: "Syntax error"> ]
 }
 
 INIT {
@@ -65,13 +66,14 @@ token read_term { <.layout_text>? <term> <.end> }
 # Numbers: section 6.3.1.1
 # TODO: Priority should be 0.
 token term:sym<integer> { $<neg>=['-'?] <integer> }
-token term:sym<float> { $<neg>=['-'?] <float_number> }
+token term:sym<float> { $<neg>=['-'?] <float> }
 
 # Negative numbers: section 6.3.1.2
 # Handled inline in the integer/float terms.
 
 # Atoms: section 6.3.1.3
 # TODO: Priority is 0.
+token operator { <.infix> | <.prefix> | <.postfix> }
 token term:sym<atom> { <!operator> <atom> }
 
 
@@ -162,26 +164,26 @@ token token:sym<head_tail_separator> { <head_tail_separator_token> }
 token token:sym<comma> { <comma_token> }
 token token:sym<end> { <end_token> }
 
-token name { <.ws> <name_token> }
-token variable { <.ws> <variable_token> }
-token integer { <.ws> <integer_token> }
-token float { <.ws> <float_token> }
+token name { <.ws>? <name_token> }
+token variable { <.ws>? <variable_token> }
+token integer { <.ws>? <integer_token> }
+token float { <.ws>? <float_token> }
 # TODO: Char code list.
-token open_ct { <.ws> <open_token> }
-token close { <.ws> <close_token> }
-token open_list { <.ws> <open_list_token> }
-token close_list { <.ws> <close_list_token> }
-token open_curly { <.ws> <open_curly_token> }
-token close_curly { <.ws> <close_curly_token> }
-token ht_sep { <.ws> <head_tail_separator_token> }
-token comma { <.ws> <comma_token> }
-token end { <.ws> <end_token> }
+token open_ct { <.ws>? <open_token> }
+token close { <.ws>? <close_token> }
+token open_list { <.ws>? <open_list_token> }
+token close_list { <.ws>? <close_list_token> }
+token open_curly { <.ws>? <open_curly_token> }
+token close_curly { <.ws>? <close_curly_token> }
+token ht_sep { <.ws>? <head_tail_separator_token> }
+token comma { <.ws>? <comma_token> }
+token end { <.ws>? <end_token> }
 
 # Layout text, section 6.4.1
 token ws { <.layout_text>+ } # Layout text separates stuff, so we set <ws> to that
 token layout_text { [ <.layout_char> | <.comment>  ]+ }
 proto token comment { <...> }
-token comment:sym<line> { <.line_comment> \N \n  }
+token comment:sym<line> { <.line_comment_char> \N* \n  }
 token comment:sym<bracketed> {
     '/*'
     [ <-[/]> | <!after '*' > '/' ] *
@@ -191,10 +193,10 @@ token comment:sym<bracketed> {
 # Name tokens: section 6.4.2
 proto token name_token { <...> }
 token name_token:sym<identifier> { <small_char> <alnum_char>* }
-token name_token:sym<graphic> { <+graphic_char +backslash>+ }
+token name_token:sym<graphic> { <+graphic_char +backslash_char>+ }
 token name_token:sym<quoted> { <?[']> <quote_EXPR> } # For vim: ' ]> }
-token name_token:sym<semicolon> { <semicolon_token> }
-token name_token:sym<cut> { <cut_token> }
+token name_token:sym<semicolon> { <semicolon_char> }
+token name_token:sym<cut> { <cut_char> }
 
 # We might be able to get some of this for free using quote_EXPR's quotemod
 # features, but I'm not quite sure if it'll work exactly as I want to.
@@ -206,16 +208,16 @@ token quote_atom {
     | [ <-quote_escape-stopper> ]+
     ]
 }
-token quote_escape:sym<continuation> { <backslash> \n }
+token quote_escape:sym<continuation> { <backslash_char> \n }
 token quote_escape:sym<stopper> { <stopper> <stopper> }
-token quote_escape:sym<control> { <backslash> <[abfnrtv]> }
-token quote_escape:sym<octal> { <backslash> <octdigit_char> <backslash> }
-token quote_escape:sym<hex> { <backslash> x <hexdigit_char> <backslash>  }
+token quote_escape:sym<control> { <backslash_char> <[abfnrtv]> }
+token quote_escape:sym<octal> { <backslash_char> <octdigit_char> <backslash_char> }
+token quote_escape:sym<hex> { <backslash_char> x <hexdigit_char> <backslash_char>  }
 
 # Variables: section 6.4.3
 proto token variable_token { <...> }
-token variable_token:sym<anonymous> { <underscore> }
-token variable_token:sym<named> { <underscore> <alnum_char>+ | <capital_char> <alnum_char>* }
+token variable_token:sym<anonymous> { <underscore_char> }
+token variable_token:sym<named> { <underscore_char> <alnum_char>+ | <capital_char> <alnum_char>* }
 
 # Integers: section 6.4.4
 token integer_token {
@@ -226,7 +228,7 @@ token integer_token {
     | <hex_constant>
 }
 
-token integer_constant { <decint_char>+ }
+token integer_constant { <decdigit_char>+ }
 # XXX: Probably broken, due to <stopper> not being set correctly.
 token character_code_constant { 0 <single_quote_char> <quote_atom> }
 token binary_constant { 0b <bindigit_char>+ }
@@ -264,8 +266,8 @@ token graphic_char { <[#$&*+\-./:<=>?@^~]> }
 
 # Alphanumerics: section 6.5.2
 token alnum_char { <+alpha_char +digit> }
-token alpha_char { <+underscore +letter> }
-token letter_char { <+capital +small> }
+token alpha_char { <+underscore_char +letter_char> }
+token letter_char { <+capital_char +small_char> }
 token small_char { <lower> }
 token capital_char { <upper> }
 token decdigit_char { <[0..9]> }
