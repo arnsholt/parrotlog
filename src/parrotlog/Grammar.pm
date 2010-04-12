@@ -219,8 +219,11 @@ token quote_escape:sym<hex> { <backslash_char> x <hexdigit_char> <backslash_char
 
 # Variables: section 6.4.3
 proto token variable_token { <...> }
-token variable_token:sym<anonymous> { <underscore_char> }
-token variable_token:sym<named> { <underscore_char> <alnum_char>+ | <capital_char> <alnum_char>* }
+token variable_token:sym<anonymous> { <.underscore_char> }
+token variable_token:sym<named> {
+    | $<name>=[<.underscore_char> <.alnum_char>+]
+    | $<name>=[<.capital_char> <.alnum_char>*]
+}
 
 # Integers: section 6.4.4
 token integer_token {

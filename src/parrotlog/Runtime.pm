@@ -7,6 +7,7 @@ Variable is the internal data structure used for Prolog Variables.
 =end Variable
 class Variable {
     has $!value;
+    has $!name;
 
     method value() {
         if $!value ~~ Variable || $!value ~~ Term {
@@ -15,6 +16,14 @@ class Variable {
         else {
             return $!value;
         }
+    }
+
+    method name($name?) {
+        if pir::defined($name) {
+            $!name := $name;
+        }
+
+        return $!name;
     }
 
     method references($other) {
@@ -54,6 +63,10 @@ class Variable {
 
     method unbind() {
         $!value := Undef;
+    }
+
+    method output($indent = '') {
+        pir::say($indent ~ ($!name ?? $!name !! '_'));
     }
 }
 
@@ -112,7 +125,7 @@ class Term {
 
         for @!args -> $arg {
             if $arg ~~ Term { $arg.output($indent ~ '  '); }
-            elsif $arg ~~ Variable { pir::say("$indent  Var"); }
+            elsif $arg ~~ Variable { $arg.output($indent ~ '  '); }
             else { pir::say("$indent  $arg"); }
         }
     }

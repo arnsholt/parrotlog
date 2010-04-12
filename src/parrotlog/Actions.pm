@@ -12,8 +12,12 @@ method TOP($/) {
 
 # XXX: A hack for the time being.
 method prolog_text($/) { make $/[0][0]<directive>.ast; }
+
 method directive($/) { make $<directive_term>.ast; }
 method directive_term($/) { make $<EXPR>.ast; }
+
+method clause($/) { make $<clause_term>.ast; }
+method clause_term($/) { make $<EXPR>.ast; }
 
 method EXPR($/, $tag?) {
     if !$tag {
@@ -35,6 +39,8 @@ method atom:sym<name>($/) { make Term.from_data($<name>); }
 method atom:sym<empty_list>($/) { make Term.from_data('[]'); }
 method atom:sym<curly_brackets>($/) { make Term.from_data('{}'); }
 
+method term:sym<variable>($/) { make $<variable>.ast; }
+
 method term:sym<compound>($/) {
     my @args := ();
     for $<arg_list><EXPR> -> $arg {
@@ -42,4 +48,14 @@ method term:sym<compound>($/) {
     }
 
     make Term.from_data($<atom>, |@args);
+}
+
+method variable($/) { make $<variable_token>.ast; }
+
+method variable_token:sym<anonymous>($/) { make Variable.new; }
+method variable_token:sym<named>($/) {
+    my $var := Variable.new;
+    $var.name(~$<name>);
+
+    make $var;
 }
