@@ -74,7 +74,7 @@ class Term {
     method from_data($functor, *@args) {
         my $term := Term.new;
         $term.functor($functor);
-        $term.arity(@args);
+        $term.arity(+@args);
         $term.args(|@args);
 
         return $term;
@@ -89,7 +89,7 @@ class Term {
     }
 
     method arity($arity?) {
-        if $arity {
+        if pir::defined($arity) {
             $!arity := $arity;
         }
 
@@ -105,6 +105,17 @@ class Term {
     }
 
     method value() { return self; }
+
+    # Pretty print.
+    method output($indent = '') {
+        pir::say("$indent$!functor/$!arity");
+
+        for @!args -> $arg {
+            if $arg ~~ Term { $arg.output($indent ~ '  '); }
+            elsif $arg ~~ Variable { pir::say("$indent  Var"); }
+            else { pir::say("$indent  $arg"); }
+        }
+    }
 }
 
 sub unify($paths, $x, $y) {

@@ -45,7 +45,7 @@ INIT {
 }
 
 # Prolog text: section 6.2.1
-token prolog_text { [ <directive> | <clause> ]* }
+token prolog_text { ( <directive> | <clause> )* }
 
 # Directives: section 6.2.1.1
 token directive { <directive_term> <.end> }
