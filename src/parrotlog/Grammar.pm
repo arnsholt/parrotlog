@@ -8,7 +8,7 @@ grammar Parrotlog::Grammar is HLL::Grammar;
 
 # XXX: nqp-rx doesn't like grammar items with -, so we use _ instead.
 token TOP {
-    <?DEBUG>
+    #<?DEBUG>
     <prolog_text>
     [ <.ws> $ || <.panic: "Syntax error"> ]
 }
@@ -31,15 +31,16 @@ INIT {
     # the Rakduo source.
     # XXX: Prolog has lower priority = binds tighter, while I think NQP has
     # higher precedence = binds tighter. That'll have to be fixed.
-    my $i := 1;
-    while $i <= 1200 {
+    my $pri := 1;
+    while $pri <= 1200 {
+        my $i := 1201 - $pri;
         my $precstr :=
             $i < 10   ?? "000$i" !!
             $i < 100  ?? "00$i" !!
             $i < 1000 ?? "0$i" !!
                          "$i";
-        Parrotlog::Grammar.O(":prec<$precstr>", $i);
-        $i++;
+        Parrotlog::Grammar.O(":prec<$precstr>", $pri);
+        $pri++;
     }
 }
 
@@ -97,7 +98,6 @@ token arg_list { <EXPR>**<comma> }
 # Operators: section 6.3.4.3
 # TODO: I have to figure out how to interface with the NQP operator precedence
 # parser.
-# TODO: Precedence levels.
 token infix:sym<:->           { <sym> <O('xfx 1200')> }
 token infix:sym<< --> >>      { <sym> <O('xfx 1200')> }
 token prefix:sym<:->          { <sym> <O('fx  1200')> }

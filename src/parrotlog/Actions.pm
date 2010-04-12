@@ -12,3 +12,9 @@ method TOP($/) {
 method EXPR($/) {
     say('EXPR: ' ~ $/);
 }
+
+method atom:sym<name>($/) { make Term.from_data($<name>); }
+
+method term:sym<compound>($/) {
+    make Term.from_data($<atom>, |$<arg_list><EXPR>);
+}
