@@ -16,12 +16,12 @@ method prolog_text($/) {
     my @ast := ();
     for $/[0] -> $x {
         if $x<clause> { @ast.push: $x<clause>.ast; }
-        else          { @ast.push: $x<directive>.ast; }
+        #else          { @ast.push: $x<directive>.ast; }
     }
     make @ast;
 }
 
-method directive($/) { make $<directive_term>.ast; }
+method directive($/) { handle_directive($<directive_term>.ast); }
 method directive_term($/) { make $<EXPR>.ast; }
 
 method clause($/) { make $<clause_term>.ast; }

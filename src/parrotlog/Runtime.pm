@@ -207,3 +207,37 @@ sub unify($paths, $x, $y) {
         pir::die("Attempting to unify() something that isn't a Variable or a Term");
     }
 }
+
+# Directives: section 7.4.2
+our %directives;
+# Because NQP doesn't support hash literals.
+INIT {
+    %directives<dynamic>         := dynamic;
+    %directives<multifile>       := multifile;
+    %directives<discontiguous>   := discontiguous;
+    %directives<op>              := op;
+    %directives<char_conversion> := char_conversion;
+    %directives<initialization>  := initialization;
+    %directives<include>         := include;
+    %directives<ensure_loaded>   := ensure_loaded;
+}
+
+sub handle_directive($ast) {
+    $ast := $ast.args[0];
+    pir::die("Unknown directive {$ast.functor}") if !%directives{$ast.functor};
+    %directives{$ast.functor}(|$ast.args);
+}
+
+sub dynamic($predicate) {}
+sub multifile($predicate) {}
+sub discontiguous($predicate) {}
+
+sub op($priority, $spec, $operator) {
+    pir::say("Defining operator {$priority.functor}, {$spec.functor}, {$operator.functor}");
+    # TODO: Essentially, create a rule *fix:sym<$operator> { <sym> <O("$spec $priority")> }
+}
+
+sub char_conversion($in, $out) {}
+sub initialization($predicate) {}
+sub include($file) {}
+sub ensure_loaded($file) {}
