@@ -126,7 +126,7 @@ class Term {
         for @!args -> $arg {
             if $arg ~~ Term { $arg.output($indent ~ '  '); }
             elsif $arg ~~ Variable { $arg.output($indent ~ '  '); }
-            else { pir::say("$indent  $arg"); }
+            else { pir::say("$indent  $arg (Non T/V)"); }
         }
     }
 }

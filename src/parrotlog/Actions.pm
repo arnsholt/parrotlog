@@ -1,17 +1,25 @@
 class Parrotlog::Actions is HLL::Actions;
 
-sub say($msg) {
-    pir::say($msg);
-}
-
 method TOP($/) {
     make $<prolog_text>.ast;
 
-    $/.ast.output;
+    my $i := 1;
+    for $/.ast -> $x {
+        pir::say("Thing $i:");
+        $i++;
+        $x.output;
+    }
 }
 
 # XXX: A hack for the time being.
-method prolog_text($/) { make $/[0][0]<directive>.ast; }
+method prolog_text($/) {
+    my @ast := ();
+    for $/[0] -> $x {
+        if $x<clause> { @ast.push: $x<clause>.ast; }
+        else          { @ast.push: $x<directive>.ast; }
+    }
+    make @ast;
+}
 
 method directive($/) { make $<directive_term>.ast; }
 method directive_term($/) { make $<EXPR>.ast; }
@@ -19,6 +27,44 @@ method directive_term($/) { make $<EXPR>.ast; }
 method clause($/) { make $<clause_term>.ast; }
 method clause_term($/) { make $<EXPR>.ast; }
 
+method term:sym<atom>($/) { make $<atom>.ast; }
+method atom:sym<name>($/) { make Term.from_data($<name>.ast); }
+method atom:sym<empty_list>($/) { make Term.from_data('[]'); }
+method atom:sym<curly_brackets>($/) { make Term.from_data('{}'); }
+
+method term:sym<variable>($/) { make $<variable>.ast; }
+
+# Compound terms: section 6.3.3
+method term:sym<compound>($/) {
+
+    make Term.from_data($<atom>.ast.functor, |$<arg_list>.ast);
+}
+
+method arg_list($/) {
+    my @ast := ();
+    for $<exp> -> $arg {
+        @ast.push: $arg.ast;
+    }
+    make @ast;
+}
+
+# Expressions: section 6.3.3.1
+method exp($/) { make $<EXPR>.ast; }
+
+# Tokens: section 6.4
+method name($/) { make $<name_token>; }
+
+method variable($/) { make $<variable_token>.ast; }
+
+method variable_token:sym<anonymous>($/) { make Variable.new; }
+method variable_token:sym<named>($/) {
+    my $var := Variable.new;
+    $var.name(~$<name>);
+
+    make $var;
+}
+
+# Interaction with the operator precedence parser.
 method EXPR($/, $tag?) {
     if !$tag {
     }
@@ -32,30 +78,4 @@ method EXPR($/, $tag?) {
     elsif $tag eq 'POSTFIX' {
        make Term.from_data($<postfix><sym>, $/[0].ast);
     }
-}
-
-method term:sym<atom>($/) { make $<atom>.ast; }
-method atom:sym<name>($/) { make Term.from_data($<name>); }
-method atom:sym<empty_list>($/) { make Term.from_data('[]'); }
-method atom:sym<curly_brackets>($/) { make Term.from_data('{}'); }
-
-method term:sym<variable>($/) { make $<variable>.ast; }
-
-method term:sym<compound>($/) {
-    my @args := ();
-    for $<arg_list><EXPR> -> $arg {
-        @args.push: $arg.ast
-    }
-
-    make Term.from_data($<atom>, |@args);
-}
-
-method variable($/) { make $<variable_token>.ast; }
-
-method variable_token:sym<anonymous>($/) { make Variable.new; }
-method variable_token:sym<named>($/) {
-    my $var := Variable.new;
-    $var.name(~$<name>);
-
-    make $var;
 }

@@ -6,13 +6,6 @@ This is the grammar for parrotlog in Perl 6 rules.
 
 grammar Parrotlog::Grammar is HLL::Grammar;
 
-# XXX: nqp-rx doesn't like grammar items with -, so we use _ instead.
-token TOP {
-    #<?DEBUG>
-    <prolog_text>
-    [ <.ws> $ || <.panic: "Syntax error"> ]
-}
-
 INIT {
     # Operator precedence stuff for the associativity of operators.
     Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>',    'fx');
@@ -44,19 +37,40 @@ INIT {
     }
 }
 
+# Prolog text and data: section 6.2
+# Prolog text: section: 6.2.1
+# XXX: nqp-rx doesn't like grammar items with -, so we use _ instead.
+token TOP {
+    #<?DEBUG>
+    <prolog_text>
+    [ <.ws> $ || <.panic: "Syntax error"> ]
+}
+
+token termish {
+    <.ws>
+    <prefixish>*
+    <term>
+    <postfixish>*
+}
+
 # Prolog text: section 6.2.1
 token prolog_text { ( <directive> | <clause> )* }
 
 # Directives: section 6.2.1.1
-token directive { <directive_term> <.end> }
-# TODO: The principal functor of the term is ':-'
+token directive {
+    <directive_term>
+    <?{ my $ast := $<directive_term>.ast;
+        $ast ~~ Term && $ast.functor eq ":-" && $ast.arity == 1 }>
+    <.end>
+}
+# TODO: The principal functor of the term is :-/1
 # TODO: The term in directive term has priority 1201.
 token directive_term { <EXPR> }
 
 # Clauses: section 6.2.1.2
 token clause { <clause_term> <.end> }
 # TODO: The term in clause term has priority 1201.
-# TODO: The principal functor of the term is not ':-'
+# TODO: The principal functor of the term is not :-/1
 token clause_term { <EXPR> }
 
 # Data: section 6.2.2
@@ -91,9 +105,12 @@ token term:sym<variable> { <variable> }
 
 # Compound terms: section 6.3.3
 token term:sym<compound> { <atom> <.open_ct> <arg_list> <.close> }
-token arg_list { <EXPR>**<comma> }
+token arg_list { <exp>**<.comma> }
 
 # Expressions: section 6.3.3.1
+# An exp is an EXPR with a priority limit of 99. That means a precedence limit
+# of 202.
+token exp { <EXPR('0202')> }
 
 # Operators: section 6.3.4.3
 # TODO: I have to figure out how to interface with the NQP operator precedence
@@ -171,15 +188,15 @@ token variable    { <.ws> <variable_token> }
 token integer     { <.ws> <integer_token> }
 token float       { <.ws> <float_token> }
 # TODO: Char code list.
-token open_ct     { <.ws> <open_token> }
-token close       { <.ws> <close_token> }
-token open_list   { <.ws> <open_list_token> }
-token close_list  { <.ws> <close_list_token> }
-token open_curly  { <.ws> <open_curly_token> }
-token close_curly { <.ws> <close_curly_token> }
-token ht_sep      { <.ws> <head_tail_separator_token> }
-token comma       { <.ws> <comma_token> }
-token end         { <.ws> <end_token> }
+token open_ct     { <.ws> <.open_token> }
+token close       { <.ws> <.close_token> }
+token open_list   { <.ws> <.open_list_token> }
+token close_list  { <.ws> <.close_list_token> }
+token open_curly  { <.ws> <.open_curly_token> }
+token close_curly { <.ws> <.close_curly_token> }
+token ht_sep      { <.ws> <.head_tail_separator_token> }
+token comma       { <.ws> <.comma_token> }
+token end         { <.ws> <.end_token> }
 
 # Layout text, section 6.4.1
 # Layout text separates stuff, so we set <ws> to that
