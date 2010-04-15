@@ -108,7 +108,7 @@ token term:sym<compound> { <atom> <.open_ct> <arg_list> <.close> }
 token arg_list { <exp>**<.comma> }
 
 # Expressions: section 6.3.3.1
-# An exp is an EXPR with a priority limit of 99. That means a precedence limit
+# An exp is an EXPR with a priority limit of 999. That means a precedence limit
 # of 202.
 proto token exp { <...> }
 token exp:sym<EXPR> { <EXPR('0202')> }
