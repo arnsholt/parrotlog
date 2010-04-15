@@ -54,6 +54,12 @@ method exp:sym<infix>($/) { make Term.from_data($<infix><sym>); }
 method exp:sym<prefix>($/) { make Term.from_data($<prefix><sym>); }
 method exp:sym<postfix>($/) { make Term.from_data($<postfix><sym>); }
 
+# Compound terms - list notation: section 6.3.5
+method term:sym<list>($/) { make $<items>.ast; }
+method items:sym<comma>($/) { make Term.from_data('.', $<exp>.ast, $<items>.ast); }
+method items:sym<tail>($/) { make Term.from_Data('.', $<head>.ast, $<tail>.ast); }
+method items:sym<exp>($/) { make $<exp>.ast; }
+
 # Tokens: section 6.4
 method name($/) { make $<name_token>; }
 

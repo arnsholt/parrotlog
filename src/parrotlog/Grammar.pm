@@ -162,8 +162,12 @@ token infix:sym<@>            { <sym> <O('xfx  100')> }
 token infix:sym<:>            { <sym> <O('xfx   50')> }
 
 # Compound terms - list notation: section 6.3.5
-token term:<list> { <.open_list> <items> <.close_list> }
-token items { $<head>=[<.EXPR> ** <.comma>] [<.ht_sep> $<tail>=<.EXPR>]? }
+token term:sym<list> { <.open_list> <items> <.close_list> }
+proto token items { <...> }
+token items:sym<comma> { <exp> <.comma> <items> }
+token items:sym<tail> { $<head>=<.exp> <.ht_sep> $<tail>=<.exp> }
+token items:sym<exp> { <exp> }
+#token items { $<head>=[<.EXPR> ** <.comma>] [<.ht_sep> $<tail>=<.EXPR>]? }
 
 # Compound terms - curly bracket notation: section 6.3.6
 token term:<curly> { <.open_curly> <term> <.close_curly> }
@@ -280,7 +284,7 @@ token open_list_token { <open_list_char> }
 token close_list_token { <close_list_char> }
 token open_curly_token { <open_curly_char> }
 token close_curly_token { <close_curly_char> }
-token head_tail_separator_token { <head_tail_separator_char> }
+token head_tail_separator_token { <head_tail_char> }
 token comma_token { <comma_char> }
 token end_token { <end_char> }
 
