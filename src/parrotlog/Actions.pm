@@ -49,7 +49,10 @@ method arg_list($/) {
 }
 
 # Expressions: section 6.3.3.1
-method exp($/) { make $<EXPR>.ast; }
+method exp:sym<EXPR>($/) { make $<EXPR>.ast; }
+method exp:sym<infix>($/) { make Term.from_data($<infix><sym>); }
+method exp:sym<prefix>($/) { make Term.from_data($<prefix><sym>); }
+method exp:sym<postfix>($/) { make Term.from_data($<postfix><sym>); }
 
 # Tokens: section 6.4
 method name($/) { make $<name_token>; }

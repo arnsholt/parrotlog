@@ -110,7 +110,12 @@ token arg_list { <exp>**<.comma> }
 # Expressions: section 6.3.3.1
 # An exp is an EXPR with a priority limit of 99. That means a precedence limit
 # of 202.
-token exp { <EXPR('0202')> }
+proto token exp { <...> }
+token exp:sym<EXPR> { <EXPR('0202')> }
+#token exp { <infix> | <prefix> | <postfix> }
+token exp:sym<infix> { <infix> }
+token exp:sym<prefix> { <prefix> }
+token exp:sym<postfix> { <postfix> }
 
 # Operators: section 6.3.4.3
 # TODO: I have to figure out how to interface with the NQP operator precedence
