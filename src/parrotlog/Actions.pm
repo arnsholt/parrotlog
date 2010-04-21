@@ -9,6 +9,9 @@ method TOP($/) {
         $i++;
         $x.output;
     }
+
+    # A hack, for the moment being.
+    make make_past($/.ast[0]);
 }
 
 # XXX: A hack for the time being.
