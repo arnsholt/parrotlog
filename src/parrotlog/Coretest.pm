@@ -1,6 +1,5 @@
 =begin description
 
-Foo?
 Code for testing the correct workings of Parrolog's internals.
 
 =end description

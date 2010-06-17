@@ -22,8 +22,6 @@ INIT {
     # probably generate only the precedence levels we need, to avoid bogging
     # down NQP with too many of them. For on-the-fly generation of rules, see
     # the Rakduo source.
-    # XXX: Prolog has lower priority = binds tighter, while I think NQP has
-    # higher precedence = binds tighter. That'll have to be fixed.
     my $pri := 1;
     while $pri <= 1200 {
         my $i := 1201 - $pri;
@@ -35,7 +33,77 @@ INIT {
         Parrotlog::Grammar.O(":prec<$precstr>", $pri);
         $pri++;
     }
+
+    # For deep and magical reasons, NQP doesn't have literal hash
+    # constructors. This, however, works.
+    our $operators := (sub(*%args) { %args })();
 }
+
+# Section 6.2.1, Prolog text and data
+token TOP {
+    # Serial alternation to make sure the directive option is checked first,
+    # that's where the directive/not directive logic lives.
+    $<terms>=[ <term> <.end> ]*
+    [ <.ws> || <.panic "Syntax error"> ]
+}
+
+token read_term {
+    <.ws> <term> <.end> <.ws>
+}
+
+# Section 6.3, terms
+# Section 6.3.1, constants
+# Section 6.3.1.1, numbers; section 6.3.1.2, negative numbers
+token term:sym<integer> { $<neg>=['-'?] <integer> }
+token term:sym<float> { $<neg>=['-'?] <float> }
+
+# Section 6.3.1.3, atoms
+# XXX: Some kind of magic will be necessary here to rule out illegal
+# combinations of operators as literals.
+token term:sym<atom> { <.ws> <atom> }
+
+proto token atom { <...> }
+token atom:sym<name> { <name> }
+token atom:sym<empty_list> { <.open_list> <.close_list> }
+token atom:sym<curlies> { <.open_curly> <.close_curly> }
+
+# Section 6.3.2, variables
+token term:sym<variable> { <.ws> <variable> }
+
+proto token variable { <...> }
+token variable:sym<named> { $<name>=['_' <.alnum>+ | <.upper> <.alnum>*] }
+token variable:sym<anon> { '_' }
+
+# Section 6.3.3, compound terms
+token term:sym<compound> { <atom> <.open> <exp>**',' <.close> }
+token exp:sym<EXPR> { <EXPR('0202')> }
+
+# Section 6.4, tokens
+token open_list { <.ws> '[' }
+token close_list { <.ws> ']' }
+token open_curly { <.ws> '{' }
+token close_curly { <.ws> '}' }
+token end { <.ws> '.' }
+
+# Section 6.4.2, names
+proto token name { <...> }
+token name:sym<ident> { $<name>=[<.lower> <.alnum>*] }
+
+# Section 6.4.4, integer numbers
+proto token integer { <...> }
+token integer:sym<dec> { $<num>=[<[0..9]>+] }
+
+# Section 6.4.5, floating point numbers
+token float {
+    $<radix>=[<[0..9]>+ '.' <[0..9]>+]
+    [<[eE]> $<esign>=<[+\-]>? $<exponent>=[<[0..9]>+]]?
+}
+
+# Section 6.5.3, solo characters
+token open { '(' }
+token close { ')' }
+
+=begin olded
 
 # Prolog text and data: section 6.2
 # Prolog text: section: 6.2.1
@@ -344,3 +412,5 @@ token backslash_char { <[\\]> }
 token single_quote_char { <[']> }
 token double_quote_char { <["]> }
 token back_quote_char { <[`]> }
+
+=end olded

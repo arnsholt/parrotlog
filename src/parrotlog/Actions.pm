@@ -1,6 +1,24 @@
 class Parrotlog::Actions is HLL::Actions;
 
 method TOP($/) {
+    pir::say("hello!");
+    for $<terms> -> $ast {
+        if $ast.functor eq ':-' && $ast.arity == 1 {
+            # Handle directive logic. See section 7.4.2.
+        }
+        else {
+            # Handle clause. See section 7.4.3.
+        }
+    }
+}
+
+method term:sym<atom>($/) {
+    make Term.from_data($<atom>.ast);
+}
+
+=begin olded
+
+method TOP($/) {
     make $<prolog_text>.ast;
 
     my $i := 1;
@@ -91,3 +109,5 @@ method EXPR($/, $tag?) {
        make Term.from_data($<postfix><sym>, $/[0].ast);
     }
 }
+
+=end olded
