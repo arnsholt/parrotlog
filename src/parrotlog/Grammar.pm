@@ -6,6 +6,10 @@ This is the grammar for parrotlog in Perl 6 rules.
 
 grammar Parrotlog::Grammar is HLL::Grammar;
 
+our %prefix;
+our %infix;
+our %postfix;
+
 INIT {
     # Operator precedence stuff for the associativity of operators.
     Parrotlog::Grammar.O(':assoc<unary> :uassoc<non>',    'fx');
@@ -35,16 +39,20 @@ INIT {
     }
 
     # For deep and magical reasons, NQP doesn't have literal hash
-    # constructors. This, however, works.
-    our $operators := (sub(*%args) { %args })();
+    # constructors. h() is a poor man's hash constructor.
+    sub h(*%h) { %h }
+    our %infix := h(plus => 'xfx 500');
+}
+
+method is_op($op) {
+    return %prefix{$op} || %infix{$op} || %postfix{$op};
 }
 
 # Section 6.2.1, Prolog text and data
 token TOP {
-    # Serial alternation to make sure the directive option is checked first,
-    # that's where the directive/not directive logic lives.
-    $<terms>=[ <term> <.end> ]*
-    [ <.ws> || <.panic "Syntax error"> ]
+    #<?DEBUG>
+    [<EXPR> <.end>]*
+    [ <.ws> $ || <.panic: "Syntax error"> ]
 }
 
 token read_term {
@@ -60,7 +68,7 @@ token term:sym<float> { $<neg>=['-'?] <float> }
 # Section 6.3.1.3, atoms
 # XXX: Some kind of magic will be necessary here to rule out illegal
 # combinations of operators as literals.
-token term:sym<atom> { <.ws> <atom> }
+token term:sym<atom> { <.ws> <atom> <!{ is_op{$<atom>.ast} }> }
 
 proto token atom { <...> }
 token atom:sym<name> { <name> }
@@ -74,15 +82,29 @@ proto token variable { <...> }
 token variable:sym<named> { $<name>=['_' <.alnum>+ | <.upper> <.alnum>*] }
 token variable:sym<anon> { '_' }
 
-# Section 6.3.3, compound terms
-token term:sym<compound> { <atom> <.open> <exp>**',' <.close> }
-token exp:sym<EXPR> { <EXPR('0202')> }
+# Section 6.3.3, compound terms - functional notation
+token term:sym<compound> { <atom> <.open> <exp>**<.comma> <.close> }
+# XXX: In exp we should allow operators of lower precedence than '0202' to be
+# operands, but I've no idea how to allow that...
+token exp { <.ws> <EXPR('0202')> }
+
+# Section 6.3.5, compound terms - list notation
+token term:sym<list> { <.open_list> <items> <.close_list> }
+proto token items { <...> }
+token items:sym<more> { <exp> <.comma> <items> }
+token items:sym<ht> { $<car>=<.exp> <.ht> $<cdr>=<.exp> }
+token items:sym<last> { <exp> <!ht> }
+
+# Section 6.3.6, compound terms - curly bracket notation
+token term:sym<curly> { <.open_curly> <EXPR> <.close_curly> }
 
 # Section 6.4, tokens
 token open_list { <.ws> '[' }
 token close_list { <.ws> ']' }
 token open_curly { <.ws> '{' }
 token close_curly { <.ws> '}' }
+token ht { <.ws> '|' }
+token comma { <.ws> ',' }
 token end { <.ws> '.' }
 
 # Section 6.4.2, names
@@ -102,6 +124,14 @@ token float {
 # Section 6.5.3, solo characters
 token open { '(' }
 token close { ')' }
+
+# Operators:
+token infix:sym<prolog> {
+    <.ws> $<op>=<.atom>
+    <?{ %infix{$<op>.ast} }>
+    <O(%infix{$<op>.ast})>
+}
+#token infix:sym<prolog> { <.ws> plus <O('xfx  500')> <.ws> }
 
 =begin olded
 

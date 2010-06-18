@@ -1,19 +1,59 @@
 class Parrotlog::Actions is HLL::Actions;
 
 method TOP($/) {
-    pir::say("hello!");
-    for $<terms> -> $ast {
+    for $<EXPR> -> $ast {
+        $ast := $ast.ast;
         if $ast.functor eq ':-' && $ast.arity == 1 {
             # Handle directive logic. See section 7.4.2.
         }
         else {
             # Handle clause. See section 7.4.3.
         }
+        $ast.output();
     }
 }
 
-method term:sym<atom>($/) {
-    make Term.from_data($<atom>.ast);
+method term:sym<atom>($/) { make Term.from_data($<atom>.ast); }
+
+method atom:sym<name>($/) { make ~$/; }
+method atom:sym<empty_list>($/) { make '[]'; }
+method atom:sym<curlies>($/) { make '{}'; }
+
+method term:sym<compound>($/) {
+    pir::say("compound");
+    my @args;
+    for $<exp> -> $arg {
+        @args.push: $arg.ast;
+    }
+    make Term.from_data($<atom>, |@args);
+}
+
+method exp($/) { make $<EXPR>.ast }
+
+method term:sym<list>($/) { pir::say("list");make $<items>.ast }
+method items:sym<more>($/) { make Term.from_data('.', $<exp>.ast, $<items>.ast) }
+method items:sym<ht>($/) { make Term.from_data('.', $<car>.ast, $<cdr>.ast) }
+method items:sym<last>($/) {
+    make Term.from_data('.', $<exp>.ast, Term.from_data('[]'))
+}
+
+method term:sym<curly>($/) { make Term.from_data('{}', $<EXPR>.ast) }
+
+method EXPR($/, $tag?) {
+    # $tag is empty in the final reduction of EXPR. In that case we don't need
+    # to do anything.
+    return 0 if !$tag;
+
+    # TODO: Handle different cases depending on $tag.
+    if $tag eq 'INFIX' {
+        make Term.from_data($<OPER><op>.ast, $/[0].ast, $/[1].ast);
+    }
+    elsif $tag eq 'PREFIX' {
+        make Term.from_data($<OPER><op>.ast, $/[0].ast);
+    }
+    elsif $tag eq 'POSTFIX' {
+        make Term.from_data($<OPER><op>.ast, $/[0].ast);
+    }
 }
 
 =begin olded
