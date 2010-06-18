@@ -131,7 +131,7 @@ token exp { <.ws> <EXPR('0202')> }
 token term:sym<list> { <.open_list> <items> <.close_list> }
 proto token items { <...> }
 token items:sym<more> { <exp> <.comma> <items> }
-token items:sym<ht> { $<car>=<.exp> <.ht> $<cdr>=<.exp> }
+token items:sym<ht> { <car=.exp> <.ht> <cdr=.exp> }
 token items:sym<last> { <exp> <!ht> }
 
 # Section 6.3.6, compound terms - curly bracket notation
@@ -145,6 +145,18 @@ token close_curly { <.ws> '}' }
 token ht { <.ws> '|' }
 token comma { <.ws> ',' }
 token end { <.ws> '.' }
+
+# Layout text, section 6.4.1
+# Layout text separates stuff, so we set <ws> to that
+token ws { <.layout_text>* }
+token layout_text { [ <.layout_char> | <.comment>  ]+ }
+proto token comment { <...> }
+token comment:sym<line> { '%' \N* \n  }
+token comment:sym<bracketed> {
+    '/*'
+    [ <-[/]> | <!after '*' > '/' ] *
+    '*/'
+}
 
 # Section 6.4.2, names
 proto token name { <...> }
@@ -164,9 +176,12 @@ token float {
 token open { '(' }
 token close { ')' }
 
+# Layout characters: section 6.5.4
+token layout_char { <space> | \n }
+
 # Operators:
 token infix:sym<prolog> {
-    <.ws> $<op>=<.atom>
+    <.ws> <op=.atom>
     <?{ %infix{$<op>.ast} }>
     <O(%infix{$<op>.ast})>
 }
@@ -343,18 +358,6 @@ token close_curly { <.ws> <.close_curly_token> }
 token ht_sep      { <.ws> <.head_tail_separator_token> }
 token comma       { <.ws> <.comma_token> }
 token end         { <.ws> <.end_token> }
-
-# Layout text, section 6.4.1
-# Layout text separates stuff, so we set <ws> to that
-token ws { <.layout_text>* }
-token layout_text { [ <.layout_char> | <.comment>  ]+ }
-proto token comment { <...> }
-token comment:sym<line> { <.line_comment_char> \N* \n  }
-token comment:sym<bracketed> {
-    '/*'
-    [ <-[/]> | <!after '*' > '/' ] *
-    '*/'
-}
 
 # Name tokens: section 6.4.2
 proto token name_token { <...> }
