@@ -38,10 +38,47 @@ INIT {
         $pri++;
     }
 
-    # For deep and magical reasons, NQP doesn't have literal hash
-    # constructors. h() is a poor man's hash constructor.
-    sub h(*%h) { %h }
-    our %infix := h(plus => 'xfx 500');
+    %prefix<:-> := 'fx 1200';
+    %prefix<?-> := 'fx 1200';
+    %prefix<->  := 'fy 200';
+    %prefix<\\> := 'fy 200';
+
+    %infix<:->    := 'xfx 1200';
+    %infix{'-->'} := 'xfx 1200';
+    %infix<;>     := 'xfy 1100';
+    %infix{'->'}  := 'xfy 1050';
+    %infix<,>     := 'xfy 1000';
+    %infix<=>     := 'xfx  700';
+    %infix<\\=>   := 'xfx  700';
+    %infix<==>    := 'xfx  700';
+    %infix<\\==>  := 'xfx  700';
+    %infix<<@<>>  := 'xfx  700';
+    %infix<<@=<>> := 'xfx  700';
+    %infix{'@>'}  := 'xfx  700';
+    %infix{'@>='} := 'xfx  700';
+    %infix<=..>   := 'xfx  700';
+    %infix<is>    := 'xfx  700';
+    %infix<=:=>   := 'xfx  700';
+    %infix<=\\=>  := 'xfx  700';
+    %infix<< < >> := 'xfx  700';
+    %infix<=<>    := 'xfx  700';
+    %infix{'>'}   := 'xfx  700';
+    %infix{'>='}  := 'xfx  700';
+    %infix<+>     := 'yfx  500';
+    %infix<->     := 'yfx  500'; # XXX: Needs to check that following term is not an integer
+    %infix</\\>   := 'yfx  500';
+    %infix<\\/>   := 'yfx  500';
+    %infix<*>     := 'yfx  400';
+    %infix</>     := 'yfx  400';
+    %infix<//>    := 'yfx  400';
+    %infix<rem>   := 'yfx  400';
+    %infix<mod>   := 'yfx  400';
+    %infix{'<<'}  := 'yfx  400';
+    %infix{'>>'}  := 'yfx  400';
+    %infix<**>    := 'xfx  200';
+    %infix<^>     := 'xfy  200';
+    %infix<@>     := 'xfx  100';
+    %infix<:>     := 'xfx   50';
 }
 
 method is_op($op) {
@@ -70,6 +107,8 @@ token term:sym<float> { $<neg>=['-'?] <float> }
 # combinations of operators as literals.
 token term:sym<atom> { <.ws> <atom> <!{ is_op{$<atom>.ast} }> }
 
+# TODO: Parse graphical tokens as atoms as well, so that we are able to parse
+# operators as well.
 proto token atom { <...> }
 token atom:sym<name> { <name> }
 token atom:sym<empty_list> { <.open_list> <.close_list> }
