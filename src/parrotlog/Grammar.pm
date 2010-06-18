@@ -131,15 +131,14 @@ token exp { <.ws> <EXPR('0202')> }
 token term:sym<list> { <.open_list> <items> <.close_list> }
 proto token items { <...> }
 token items:sym<more> { <exp> <.comma> <items> }
-token items:sym<ht> { $<car>=<.exp> <.ht> $<cdr>=<.exp> }
-# I want this to work, but for some reason (LTM) it doesn't.
-#token items:sym<last> { <exp> }
+token items:sym<ht> { <car=.exp> <.ht> <cdr=.exp> }
 token items:sym<last> { <exp> <!ht> }
 
 # Section 6.3.6, compound terms - curly bracket notation
 token term:sym<curly> { <.open_curly> <EXPR> <.close_curly> }
 
 # Section 6.4, tokens
+token name { <.ws> <name_token> }
 token open_list { <.ws> '[' }
 token close_list { <.ws> ']' }
 token open_curly { <.ws> '{' }
@@ -148,7 +147,7 @@ token ht { <.ws> '|' }
 token comma { <.ws> ',' }
 token end { <.ws> '.' }
 
-# Layout text, section 6.4.1
+# Section 6.4.1, layout text
 # Layout text separates stuff, so we set <ws> to that
 token ws { <.layout_text>* }
 token layout_text { [ <.layout_char> | <.comment>  ]+ }
@@ -161,8 +160,20 @@ token comment:sym<bracketed> {
 }
 
 # Section 6.4.2, names
-proto token name { <...> }
-token name:sym<ident> { $<name>=[<.lower> <.alnum>*] }
+proto token name_token { <...> }
+token name_token:sym<ident> { $<name>=[<.lower> <.alnum>*] }
+token name_token:sym<graphic> { $<name>=[<+[\\]+graphic_char>+] }
+token name_token:sym<quoted> { <?[\']> <str=.quote_EXPR> }
+
+# Section 6.4.2.1, quoted characters
+# Essentially quote_atom from HLL::Grammar, but we allow <stopper> inside the
+# string.
+token quote_atom { [ <quote_escape> | <-quote_escape-stopper> ] }
+
+token quote_escape:sym<nl> { \\ \n }
+token quote_escape:sym<stopper> { <stopper> <.stopper> }
+token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> }
+# TODO: The remaining escape sequences.
 
 # Section 6.4.4, integer numbers
 proto token integer { <...> }
@@ -174,16 +185,19 @@ token float {
     [<[eE]> $<esign>=<[+\-]>? $<exponent>=[<[0..9]>+]]?
 }
 
+# Section 6.5.2, graphic characters
+token graphic_char { <[#$&*+\-./:<=>?@^~]> }
+
 # Section 6.5.3, solo characters
 token open { '(' }
 token close { ')' }
 
-# Layout characters: section 6.5.4
+# Section 6.5.4, layout characters
 token layout_char { <space> | \n }
 
 # Operators:
 token infix:sym<prolog> {
-    <.ws> $<op>=<.atom>
+    <.ws> <op=.atom>
     <?{ %infix{$<op>.ast} }>
     <O(%infix{$<op>.ast})>
 }

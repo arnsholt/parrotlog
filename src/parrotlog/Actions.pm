@@ -15,7 +15,7 @@ method TOP($/) {
 
 method term:sym<atom>($/) { make Term.from_data($<atom>.ast); }
 
-method atom:sym<name>($/) { make ~$/; }
+method atom:sym<name>($/) { make $<name>.ast; }
 method atom:sym<empty_list>($/) { make '[]'; }
 method atom:sym<curlies>($/) { make '{}'; }
 
@@ -38,6 +38,26 @@ method items:sym<last>($/) {
 }
 
 method term:sym<curly>($/) { make Term.from_data('{}', $<EXPR>.ast) }
+
+method name($/) { make $<name_token>.ast }
+
+method name_token:sym<ident>($/) { make ~$<name> }
+method name_token:sym<graphic>($/) { make ~$<name> }
+method name_token:sym<quoted>($/) { make $<str>.ast }
+
+method quote_EXPR($/) { make $<quote_delimited>.ast; }
+method quote_delimited($/) {
+    my $str := '';
+    for $<quote_atom> -> $part {
+        $str := $str ~ $part.ast;
+    }
+
+    make $str;
+}
+
+method quote_escape:sym<nl>($/) { make "\n" }
+method quote_escape:sym<stopper>($/) { make ~$<stopper> }
+method quote_escape:sym<meta>($/) { make ~$<meta> }
 
 method EXPR($/, $tag?) {
     # $tag is empty in the final reduction of EXPR. In that case we don't need
