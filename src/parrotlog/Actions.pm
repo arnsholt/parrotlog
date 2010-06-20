@@ -82,9 +82,9 @@ method exp($/) { make $<EXPR>.ast }
 
 method term:sym<list>($/) { make $<items>.ast }
 method items:sym<more>($/) { make Term.from_data('.', $<exp>.ast, $<items>.ast) }
-method items:sym<ht>($/) { make Term.from_data('.', $<car>.ast, $<cdr>.ast) }
 method items:sym<last>($/) {
-    make Term.from_data('.', $<exp>.ast, Term.from_data('[]'))
+    make Term.from_data('.', $<car>.ast,
+        $<cdr>[0] ?? $<cdr>[0].ast !! Term.from_data('[]'));
 }
 
 method term:sym<curly>($/) { make Term.from_data('{}', $<EXPR>.ast) }

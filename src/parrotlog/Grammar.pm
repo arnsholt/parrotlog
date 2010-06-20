@@ -140,10 +140,10 @@ token exp { <.ws> <EXPR('0203')> }
 token term:sym<list> { <.open_list> <items> <.close_list> }
 proto token items { <...> }
 token items:sym<more> { <exp> <.comma> <items> }
-token items:sym<ht> { <car=.exp> <.ht> <cdr=.exp> }
+token items:sym<ht> { <car=.exp> [<.ht> <cdr=.exp>]? }
 # XXX: Don't really like how I have to use lookahead here. Try to fold ht and
 # last into one rule?
-token items:sym<last> { <exp> <!ht> }
+#token items:sym<last> { <exp> <!ht> }
 
 # Section 6.3.6, compound terms - curly bracket notation
 token term:sym<curly> { <.open_curly> <EXPR> <.close_curly> }
