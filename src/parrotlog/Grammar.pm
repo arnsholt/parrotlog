@@ -136,7 +136,7 @@ token variable:sym<anon> { '_' }
 token term:sym<compound> { <atom> <.open> <exp>**<.comma> <.close> }
 # XXX: In exp we should allow operators of lower precedence than '0202' to be
 # operands, but I've no idea how to allow that...
-token exp { <.ws> <EXPR('0202')> }
+token exp { <.ws> <EXPR('0203')> }
 
 # Section 6.3.5, compound terms - list notation
 token term:sym<list> { <.open_list> <items> <.close_list> }
