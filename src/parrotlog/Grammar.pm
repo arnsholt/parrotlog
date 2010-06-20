@@ -210,19 +210,21 @@ token layout_char { <space> | \n }
 
 # Operators:
 token infix:sym<prolog> {
-    <.ws> <op=.atom>
+    # The infix operators need a special case for comma, since it isn't a
+    # <name>.
+    <.ws> [<op=.name> | <op=.comma>]
     <?{ %infix{$<op>.ast} }>
     <O(%infix{$<op>.ast})>
 }
 
 token prefix:sym<prolog> {
-    <.ws> <op=.atom>
+    <.ws> <op=.name>
     <?{ %prefix{$<op>.ast} }>
     <O(%prefix{$<op>.ast})>
 }
 
 token postfix:sym<prolog> {
-    <.ws> <op=.atom>
+    <.ws> <op=.name>
     <?{ %postfix{$<op>.ast} }>
     <O(%postfix{$<op>.ast})>
 }

@@ -29,14 +29,32 @@ method insert_op($priority, $specifier, $operator) {
     $operator := $operator.functor; # XXX: Can also be a list.
     my $spec := "$specifier $priority";
 
-    # XXX: Make sure we don't create illegal combinations of operators!
+=begin spec
+Section 6.3.4.3:
+There shall not be two operators with the same class and name.
+
+There shall not be an infix and a prefix operator with the same name.
+=end spec
     if $specifier eq 'fx' || $specifier eq 'fy' {
+        die("Redefinition of operator $operator")
+            if %Parrotlog::Grammar::prefix{$operator};
+
         %Parrotlog::Grammar::prefix{$operator} := $spec;
     }
     elsif $specifier eq 'xfx' || $specifier eq 'xfy' || $specifier eq 'yfx' {
+        die("Redefinition of operator $operator")
+            if %Parrotlog::Grammar::infix{$operator};
+        die("Cannot create infix $operator when postfix already exists")
+            if %Parrotlog::Grammar::postfix{$operator};
+
         %Parrotlog::Grammar::infix{$operator} := $spec;
     }
     elsif $specifier eq 'xf' || $specifier eq 'yf' {
+        die("Redefinition of operator $operator")
+            if %Parrotlog::Grammar::postfix{$operator};
+        die("Cannot create postfix $operator when infix already exists")
+            if %Parrotlog::Grammar::infix{$operator};
+
         %Parrotlog::Grammar::postfix{$operator} := $spec;
     }
     else {
@@ -72,6 +90,7 @@ method items:sym<last>($/) {
 method term:sym<curly>($/) { make Term.from_data('{}', $<EXPR>.ast) }
 
 method name($/) { make $<name_token>.ast }
+method comma($/) { make ',' } # To make the EXPR code happy
 
 method name_token:sym<ident>($/) { make ~$<name> }
 method name_token:sym<graphic>($/) { make ~$<name> }
