@@ -75,7 +75,7 @@ method term:sym<compound>($/) {
     for $<exp> -> $arg {
         @args.push: $arg.ast;
     }
-    make Term.from_data($<atom>, |@args);
+    make Term.from_data($<atom>.ast, |@args);
 }
 
 method exp($/) { make $<EXPR>.ast }

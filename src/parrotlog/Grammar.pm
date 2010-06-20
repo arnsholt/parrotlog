@@ -118,8 +118,6 @@ token term:sym<float> { $<neg>=['-'?] <float> }
 # combinations of operators as literals.
 token term:sym<atom> { <.ws> <atom> <!{ is_op{$<atom>.ast} }> }
 
-# TODO: Parse graphical tokens as atoms as well, so that we are able to parse
-# operators as well.
 proto token atom { <...> }
 token atom:sym<name> { <name> }
 token atom:sym<empty_list> { <.open_list> <.close_list> }
