@@ -88,13 +88,24 @@ method is_op($op) {
 # Section 6.2.1, Prolog text and data
 token TOP {
     #<?DEBUG>
-    [<EXPR> <.end>]*
+    #[<term=.EXPR> <.end>]*
+
+    # Serial alternation to make sure we check for directive before
+    # interpreting as clause.
+    [<directive> || <clause>]*
     [ <.ws> $ || <.panic: "Syntax error"> ]
 }
 
 token read_term {
     <.ws> <term> <.end> <.ws>
 }
+
+token directive {
+    <directive=.EXPR> <.end>
+    <?{ $<directive>.ast.functor eq ':-' && $<directive>.ast.arity == 1 }>
+}
+
+token clause { <clause=.EXPR> <.end> }
 
 # Section 6.3, terms
 # Section 6.3.1, constants
@@ -132,6 +143,8 @@ token term:sym<list> { <.open_list> <items> <.close_list> }
 proto token items { <...> }
 token items:sym<more> { <exp> <.comma> <items> }
 token items:sym<ht> { <car=.exp> <.ht> <cdr=.exp> }
+# XXX: Don't really like how I have to use lookahead here. Try to fold ht and
+# last into one rule?
 token items:sym<last> { <exp> <!ht> }
 
 # Section 6.3.6, compound terms - curly bracket notation
@@ -177,7 +190,7 @@ token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> }
 
 # Section 6.4.4, integer numbers
 proto token integer { <...> }
-token integer:sym<dec> { $<num>=[<[0..9]>+] }
+token integer:sym<dec> { <decint> }
 
 # Section 6.4.5, floating point numbers
 token float {
@@ -201,7 +214,18 @@ token infix:sym<prolog> {
     <?{ %infix{$<op>.ast} }>
     <O(%infix{$<op>.ast})>
 }
-#token infix:sym<prolog> { <.ws> plus <O('xfx  500')> <.ws> }
+
+token prefix:sym<prolog> {
+    <.ws> <op=.atom>
+    <?{ %prefix{$<op>.ast} }>
+    <O(%prefix{$<op>.ast})>
+}
+
+token postfix:sym<prolog> {
+    <.ws> <op=.atom>
+    <?{ %postfix{$<op>.ast} }>
+    <O(%postfix{$<op>.ast})>
+}
 
 =begin olded
 

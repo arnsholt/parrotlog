@@ -1,26 +1,58 @@
 class Parrotlog::Actions is HLL::Actions;
 
 method TOP($/) {
-    for $<EXPR> -> $ast {
+    for $<clause> -> $ast {
         $ast := $ast.ast;
-        if $ast.functor eq ':-' && $ast.arity == 1 {
-            # Handle directive logic. See section 7.4.2.
-        }
-        else {
-            # Handle clause. See section 7.4.3.
-        }
-        $ast.output();
+        $ast.output;
     }
 }
 
-method term:sym<atom>($/) { make Term.from_data($<atom>.ast); }
+# XXX: Directive handling should probably be folded into the grammar, rather
+# than the actions, seeing how their effects are mostly syntactic.
+method directive($/) {
+    my $directive := $<directive>.ast.args[0];
+    if $directive.functor eq 'op' && $directive.arity == 3 {
+        self.insert_op(|$directive.args);
+    }
+    else {
+        pir::die("Unknown directive {$directive.functor}/{$directive.arity}");
+    }
+}
 
-method atom:sym<name>($/) { make $<name>.ast; }
-method atom:sym<empty_list>($/) { make '[]'; }
-method atom:sym<curlies>($/) { make '{}'; }
+method clause($/) { make $<clause>.ast }
+
+# Section 7.4.2.4, directive op/3
+method insert_op($priority, $specifier, $operator) {
+    # XXX: Check constraints on input arguments!
+    $specifier := $specifier.functor;
+    $priority := $priority.functor;
+    $operator := $operator.functor; # XXX: Can also be a list.
+    my $spec := "$specifier $priority";
+
+    # XXX: Make sure we don't create illegal combinations of operators!
+    if $specifier eq 'fx' || $specifier eq 'fy' {
+        %Parrotlog::Grammar::prefix{$operator} := $spec;
+    }
+    elsif $specifier eq 'xfx' || $specifier eq 'xfy' || $specifier eq 'yfx' {
+        %Parrotlog::Grammar::infix{$operator} := $spec;
+    }
+    elsif $specifier eq 'xf' || $specifier eq 'yf' {
+        %Parrotlog::Grammar::postfix{$operator} := $spec;
+    }
+    else {
+        pir::die("Bad operator specifier: $specifier");
+    }
+}
+
+method term:sym<integer>($/) { make $<integer>.ast }
+
+method term:sym<atom>($/) { make Term.from_data($<atom>.ast) }
+
+method atom:sym<name>($/) { make $<name>.ast }
+method atom:sym<empty_list>($/) { make '[]' }
+method atom:sym<curlies>($/) { make '{}' }
 
 method term:sym<compound>($/) {
-    pir::say("compound");
     my @args;
     for $<exp> -> $arg {
         @args.push: $arg.ast;
@@ -30,7 +62,7 @@ method term:sym<compound>($/) {
 
 method exp($/) { make $<EXPR>.ast }
 
-method term:sym<list>($/) { pir::say("list");make $<items>.ast }
+method term:sym<list>($/) { make $<items>.ast }
 method items:sym<more>($/) { make Term.from_data('.', $<exp>.ast, $<items>.ast) }
 method items:sym<ht>($/) { make Term.from_data('.', $<car>.ast, $<cdr>.ast) }
 method items:sym<last>($/) {
@@ -45,7 +77,7 @@ method name_token:sym<ident>($/) { make ~$<name> }
 method name_token:sym<graphic>($/) { make ~$<name> }
 method name_token:sym<quoted>($/) { make $<str>.ast }
 
-method quote_EXPR($/) { make $<quote_delimited>.ast; }
+method quote_EXPR($/) { make $<quote_delimited>.ast }
 method quote_delimited($/) {
     my $str := '';
     for $<quote_atom> -> $part {
@@ -58,6 +90,10 @@ method quote_delimited($/) {
 method quote_escape:sym<nl>($/) { make "\n" }
 method quote_escape:sym<stopper>($/) { make ~$<stopper> }
 method quote_escape:sym<meta>($/) { make ~$<meta> }
+
+# XXX: At some point numbers need to be handled separately. The integer 2 and
+# the atom '2' are not supposed to unify (but they do currently).
+method integer:sym<dec>($/) { make Term.from_data("{$<decint>.ast}") }
 
 method EXPR($/, $tag?) {
     # $tag is empty in the final reduction of EXPR. In that case we don't need
