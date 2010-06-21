@@ -182,7 +182,7 @@ token quote_atom { [ <quote_escape> | <-quote_escape-stopper> ] }
 
 token quote_escape:sym<nl> { \\ \n }
 token quote_escape:sym<stopper> { <stopper> <.stopper> }
-token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> }
+token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> } # Make vim happy: '
 # TODO: The remaining escape sequences.
 
 # Section 6.4.4, integer numbers
@@ -191,8 +191,8 @@ token integer:sym<dec> { <decint> }
 token integer:sym<bin> { '0b' <binint> }
 token integer:sym<oct> { '0o' <octint> }
 token integer:sym<hex> { '0x' <hexint> }
+token integer:sym<chr> { "0'" (.) }
 token decint { \d+ } # Override decint from HLL::Grammar to disallow _
-# TODO: 
 
 # Section 6.4.5, floating point numbers
 token float { <dec_number> }

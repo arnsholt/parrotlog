@@ -126,6 +126,7 @@ method integer:sym<dec>($/) { make Term.from_data("{$<decint>.ast}") }
 method integer:sym<bin>($/) { make Term.from_data("{$<binint>.ast}") }
 method integer:sym<oct>($/) { make Term.from_data("{$<octint>.ast}") }
 method integer:sym<hex>($/) { make Term.from_data("{$<hexint>.ast}") }
+method integer:sym<chr>($/) { make Term.from_data("{pir::ord(~$/[0])}") }
 
 method float($/) { make Term.from_data("{$<dec_number>.ast}") }
 
