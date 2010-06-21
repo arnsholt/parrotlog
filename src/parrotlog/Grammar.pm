@@ -184,6 +184,8 @@ token quote_escape:sym<nl> { \\ \n }
 token quote_escape:sym<stopper> { <stopper> <.stopper> }
 token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> } # Make vim happy: '
 # TODO: The remaining escape sequences.
+token quote_escape:sym<oct> { \\ <octint> \\ }
+token quote_escape:sym<hex> { \\ x <hexint> \\ }
 
 # Section 6.4.4, integer numbers
 proto token integer { <...> }

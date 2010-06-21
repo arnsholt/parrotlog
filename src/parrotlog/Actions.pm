@@ -119,6 +119,8 @@ method quote_delimited($/) {
 method quote_escape:sym<nl>($/) { make "\n" }
 method quote_escape:sym<stopper>($/) { make ~$<stopper> }
 method quote_escape:sym<meta>($/) { make ~$<meta> }
+method quote_espace:sym<oct>($/) { make pir::chr($<octint>.ast) }
+method quote_espace:sym<hex>($/) { make pir::chr($<hexint>.ast) }
 
 # XXX: At some point numbers need to be handled separately. The integer 2 and
 # the atom '2' are not supposed to unify (but they do currently).
