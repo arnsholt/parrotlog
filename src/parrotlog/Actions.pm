@@ -44,23 +44,23 @@ There shall not be two operators with the same class and name.
 There shall not be an infix and a prefix operator with the same name.
 =end spec
     if $specifier eq 'fx' || $specifier eq 'fy' {
-        die("Redefinition of operator $operator")
+        pir::die("Redefinition of operator $operator")
             if %Parrotlog::Grammar::prefix{$operator};
 
         %Parrotlog::Grammar::prefix{$operator} := $spec;
     }
     elsif $specifier eq 'xfx' || $specifier eq 'xfy' || $specifier eq 'yfx' {
-        die("Redefinition of operator $operator")
+        pir::die("Redefinition of operator $operator")
             if %Parrotlog::Grammar::infix{$operator};
-        die("Cannot create infix $operator when postfix already exists")
+        pir::die("Cannot create infix $operator when postfix already exists")
             if %Parrotlog::Grammar::postfix{$operator};
 
         %Parrotlog::Grammar::infix{$operator} := $spec;
     }
     elsif $specifier eq 'xf' || $specifier eq 'yf' {
-        die("Redefinition of operator $operator")
+        pir::die("Redefinition of operator $operator")
             if %Parrotlog::Grammar::postfix{$operator};
-        die("Cannot create postfix $operator when infix already exists")
+        pir::die("Cannot create postfix $operator when infix already exists")
             if %Parrotlog::Grammar::infix{$operator};
 
         %Parrotlog::Grammar::postfix{$operator} := $spec;
