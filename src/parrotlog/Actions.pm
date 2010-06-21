@@ -87,7 +87,8 @@ method term:sym<compound>($/) {
     make Term.from_data($<atom>.ast, |@args);
 }
 
-method exp($/) { make $<EXPR>.ast }
+method exp:sym<expr>($/) { make $<EXPR>.ast }
+method exp:sym<op>($/) { make Term.from_data($<atom>.ast) }
 
 method term:sym<list>($/) { make $<items>.ast }
 method items:sym<more>($/) { make Term.from_data('.', $<exp>.ast, $<items>.ast) }
