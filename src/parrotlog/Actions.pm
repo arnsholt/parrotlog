@@ -2,6 +2,14 @@ class Parrotlog::Actions is HLL::Actions;
 
 method TOP($/) {
     for $<clause> -> $ast {
+=begin spec
+
+A clause whose functor is :-/2 defines a procedure foo/n where foo and n are
+the functor and arity of the clause's first argument, respectively; any other
+clause defines a procedure foo/n where foo and n are the clause's functor and
+arity. foo cannot be a built-in or a control construct.
+
+=end spec
         $ast := $ast.ast;
         $ast.output;
     }
@@ -63,6 +71,7 @@ There shall not be an infix and a prefix operator with the same name.
 }
 
 method term:sym<integer>($/) { make $<integer>.ast }
+method term:sym<float>($/) { make $<integer>.ast }
 
 method term:sym<atom>($/) { make Term.from_data($<atom>.ast) }
 
@@ -113,7 +122,13 @@ method quote_escape:sym<meta>($/) { make ~$<meta> }
 # XXX: At some point numbers need to be handled separately. The integer 2 and
 # the atom '2' are not supposed to unify (but they do currently).
 method integer:sym<dec>($/) { make Term.from_data("{$<decint>.ast}") }
+method integer:sym<bin>($/) { make Term.from_data("{$<binint>.ast}") }
+method integer:sym<oct>($/) { make Term.from_data("{$<octint>.ast}") }
+method integer:sym<hex>($/) { make Term.from_data("{$<hexint>.ast}") }
 
+method float($/) { make Term.from_data("{$<dec_number>.ast}") }
+
+method circumfix:sym<( )>($/) { make $<EXPR>.ast }
 method EXPR($/, $tag?) {
     # $tag is empty in the final reduction of EXPR. In that case we don't need
     # to do anything.

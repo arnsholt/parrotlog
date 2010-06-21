@@ -81,7 +81,7 @@ INIT {
     %infix<:>     := 'xfx   50';
 }
 
-method is_op($op) {
+sub is_op($op) {
     return %prefix{$op} || %infix{$op} || %postfix{$op};
 }
 
@@ -116,7 +116,9 @@ token term:sym<float> { $<neg>=['-'?] <float> }
 # Section 6.3.1.3, atoms
 # XXX: Some kind of magic will be necessary here to rule out illegal
 # combinations of operators as literals.
-token term:sym<atom> { <.ws> <atom> <!{ is_op{$<atom>.ast} }> }
+# Section 6.3.1.3: An atom which is an operator shall not be the immediate
+# operand of an operator.
+token term:sym<atom> { <.ws> <atom> <!{ is_op($<atom>.ast) }> }
 
 proto token atom { <...> }
 token atom:sym<name> { <name> }
@@ -140,10 +142,7 @@ token exp { <.ws> <EXPR('0203')> }
 token term:sym<list> { <.open_list> <items> <.close_list> }
 proto token items { <...> }
 token items:sym<more> { <exp> <.comma> <items> }
-token items:sym<ht> { <car=.exp> [<.ht> <cdr=.exp>]? }
-# XXX: Don't really like how I have to use lookahead here. Try to fold ht and
-# last into one rule?
-#token items:sym<last> { <exp> <!ht> }
+token items:sym<last> { <car=.exp> [<.ht> <cdr=.exp>]? }
 
 # Section 6.3.6, compound terms - curly bracket notation
 token term:sym<curly> { <.open_curly> <EXPR> <.close_curly> }
@@ -189,12 +188,20 @@ token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> }
 # Section 6.4.4, integer numbers
 proto token integer { <...> }
 token integer:sym<dec> { <decint> }
+token integer:sym<bin> { '0b' <binint> }
+token integer:sym<oct> { '0o' <octint> }
+token integer:sym<hex> { '0x' <hexint> }
+token decint { \d+ } # Override decint from HLL::Grammar to disallow _
+# TODO: 
 
 # Section 6.4.5, floating point numbers
-token float {
-    $<radix>=[<[0..9]>+ '.' <[0..9]>+]
-    [<[eE]> $<esign>=<[+\-]>? $<exponent>=[<[0..9]>+]]?
-}
+token float { <dec_number> }
+# Override dec_number to allow only standard Prolog floats.
+token dec_number { $<coeff>=[<.decint> '.' <.decint>] <escale>? }
+#token float {
+#    $<radix>=[<[0..9]>+ '.' <[0..9]>+]
+#    [<[eE]> $<esign>=<[+\-]>? $<exponent>=[<[0..9]>+]]?
+#}
 
 # Section 6.5.2, graphic characters
 token graphic_char { <[#$&*+\-./:<=>?@^~]> }
@@ -207,6 +214,7 @@ token close { ')' }
 token layout_char { <space> | \n }
 
 # Operators:
+token circumfix:sym<( )> { <.ws> <.open> <EXPR> <.ws> <.close> }
 token infix:sym<prolog> {
     # The infix operators need a special case for comma, since it isn't a
     # <name>.
