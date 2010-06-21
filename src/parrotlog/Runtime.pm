@@ -1,3 +1,13 @@
+=begin spec
+
+The spec gives five, mutually exclusive types for terms: variables, integers,
+floating point numbers, atoms and compound terms (section 7.1).
+
+Variables, atoms (as compound terms of arity 0) and compound terms we handle
+properly already. Data types for ints and floats are still TODO.
+
+=end spec
+
 # Variables and terms. The variable code is largely inspired by the Perl code
 # in this PerlMonks post:  http://www.perlmonks.org/?node_id=193649
 =begin Variable
