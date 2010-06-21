@@ -192,7 +192,11 @@ token integer:sym<bin> { '0b' <binint> }
 token integer:sym<oct> { '0o' <octint> }
 token integer:sym<hex> { '0x' <hexint> }
 token integer:sym<chr> { "0'" (.) }
-token decint { \d+ } # Override decint from HLL::Grammar to disallow _
+# Override the * tokens from HLL::Grammar to disallow _ between digits.
+token decint { \d+ }
+token binint { <[01]>+ }
+token octint { <[0..7]>+ }
+token hexint { <[0..9a..fA..F]>+ }
 
 # Section 6.4.5, floating point numbers
 token float { <dec_number> }
