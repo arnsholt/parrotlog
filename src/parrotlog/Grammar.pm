@@ -182,19 +182,21 @@ token quote_atom { [ <quote_escape> | <-quote_escape-stopper> ] }
 
 token quote_escape:sym<nl> { \\ \n }
 token quote_escape:sym<stopper> { <stopper> <.stopper> }
-token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> } # Make vim happy: '
+token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> }
 # TODO: The remaining escape sequences.
 token quote_escape:sym<oct> { \\ <octint> \\ }
 token quote_escape:sym<hex> { \\ x <hexint> \\ }
 
 # Section 6.4.4, integer numbers
 proto token integer { <...> }
-token integer:sym<dec> { <decint> }
+# A bit of a hack to prevent "1.3." from being read as two integers rather
+# than a single float
+token integer:sym<dec> { <decint> <!before '.' <decint>> }
 token integer:sym<bin> { '0b' <binint> }
 token integer:sym<oct> { '0o' <octint> }
 token integer:sym<hex> { '0x' <hexint> }
-token integer:sym<chr> { "0'" (.) }
-# Override the * tokens from HLL::Grammar to disallow _ between digits.
+token integer:sym<chr> { "0'" (.) } # XXX: This is not 100% right
+# Override the *int tokens from HLL::Grammar to disallow _ between digits.
 token decint { \d+ }
 token binint { <[01]>+ }
 token octint { <[0..7]>+ }
@@ -204,10 +206,6 @@ token hexint { <[0..9a..fA..F]>+ }
 token float { <dec_number> }
 # Override dec_number to allow only standard Prolog floats.
 token dec_number { $<coeff>=[<.decint> '.' <.decint>] <escale>? }
-#token float {
-#    $<radix>=[<[0..9]>+ '.' <[0..9]>+]
-#    [<[eE]> $<esign>=<[+\-]>? $<exponent>=[<[0..9]>+]]?
-#}
 
 # Section 6.5.2, graphic characters
 token graphic_char { <[#$&*+\-./:<=>?@^~]> }
