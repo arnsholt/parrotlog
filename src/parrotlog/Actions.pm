@@ -79,6 +79,15 @@ method atom:sym<name>($/) { make $<name>.ast }
 method atom:sym<empty_list>($/) { make '[]' }
 method atom:sym<curlies>($/) { make '{}' }
 
+method term:sym<variable>($/) { make $<variable>.ast }
+
+method variable:sym<named>($/) { 
+    my $var := Variable.new;
+    $var.name: $<name>;
+    make $var;
+}
+method variable:sym<anon>($/) { make Variable.new }
+
 method term:sym<compound>($/) {
     my @args;
     for $<exp> -> $arg {
