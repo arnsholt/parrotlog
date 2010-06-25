@@ -153,15 +153,41 @@ class Term is PrologTerm {
 }
 
 class Int is PrologTerm {
+    has $!value;
+
+    method create($value) {
+        my $i := Int.new;
+        $i.value($value);
+    }
+
+    method value($value?) {
+        if pir::defined($value) {
+            $!value := $value
+        }
+
+        return $!value;
+    }
+
     method variable_set() { return pir::null__p; }
-    method existential_vars() { return pir::null_p; }
+    method existential_vars() { return pir::null__p; }
     method free_vars($t) { return pir::null__p; }
+
+    method output($indent = '') { pir::say("$indent$!value"); }
 }
 
 class Float is PrologTerm {
+    has $!value;
+
+    method create($value) {
+        my $i := Float.new;
+        $i.value($value);
+    }
+
     method variable_set() { return pir::null__p; }
-    method existential_vars() { return pir::null_p; }
+    method existential_vars() { return pir::null__p; }
     method free_vars($t) { return pir::null__p; }
+
+    method output($indent = '') { pir::say("$indent$!value"); }
 }
 
 sub unify($paths, $x, $y) {
