@@ -8,6 +8,18 @@ properly already. Data types for ints and floats are still TODO.
 
 =end spec
 
+# PrologTerm: Base class for all Prolog types.
+class PrologTerm {
+    # Section 7.1.1.1, variable set of a term
+    method variable_set() { pir::die("virtual method!"); }
+
+    # Section 7.1.1.3, existential variables set of a term
+    method existential_vars() { pir::die("virtual method!"); }
+
+    # Section 7.1.1.4, free variables set of a term
+    method free_vars($term) { pir::die("virtual method!"); }
+}
+
 # Variables and terms. The variable code is largely inspired by the Perl code
 # in this PerlMonks post:  http://www.perlmonks.org/?node_id=193649
 =begin Variable
@@ -15,7 +27,7 @@ properly already. Data types for ints and floats are still TODO.
 Variable is the internal data structure used for Prolog Variables.
 
 =end Variable
-class Variable {
+class Variable is PrologTerm {
     has $!value;
     has $!name;
 
@@ -87,7 +99,7 @@ $arity 0 and an ampty args array, while complex terms will have $arity > 0 and
 the corresponding number of elements in @args.
 
 =end Term
-class Term {
+class Term is PrologTerm {
     has $!functor;
     has $!arity;
     has @!args;
