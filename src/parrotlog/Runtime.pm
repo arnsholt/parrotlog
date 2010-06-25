@@ -158,6 +158,7 @@ class Int is PrologTerm {
     method create($value) {
         my $i := Int.new;
         $i.value($value);
+        return $i;
     }
 
     method value($value?) {
@@ -179,8 +180,17 @@ class Float is PrologTerm {
     has $!value;
 
     method create($value) {
-        my $i := Float.new;
-        $i.value($value);
+        my $f := Float.new;
+        $f.value($value);
+        return $f;
+    }
+
+    method value($value?) {
+        if pir::defined($value) {
+            $!value := $value
+        }
+
+        return $!value;
     }
 
     method variable_set() { return pir::null__p; }

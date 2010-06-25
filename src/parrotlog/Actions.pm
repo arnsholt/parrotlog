@@ -122,15 +122,13 @@ method quote_escape:sym<meta>($/) { make ~$<meta> }
 method quote_espace:sym<oct>($/) { make pir::chr($<octint>.ast) }
 method quote_espace:sym<hex>($/) { make pir::chr($<hexint>.ast) }
 
-# XXX: At some point numbers need to be handled separately. The integer 2 and
-# the atom '2' are not supposed to unify (but they do currently).
-method integer:sym<dec>($/) { make Term.from_data("{$<decint>.ast}") }
-method integer:sym<bin>($/) { make Term.from_data("{$<binint>.ast}") }
-method integer:sym<oct>($/) { make Term.from_data("{$<octint>.ast}") }
-method integer:sym<hex>($/) { make Term.from_data("{$<hexint>.ast}") }
-method integer:sym<chr>($/) { make Term.from_data("{pir::ord(~$/[0])}") }
+method integer:sym<dec>($/) { make Int.create($<decint>.ast) }
+method integer:sym<bin>($/) { make Int.create($<binint>.ast) }
+method integer:sym<oct>($/) { make Int.create($<octint>.ast) }
+method integer:sym<hex>($/) { make Int.create($<hexint>.ast) }
+method integer:sym<chr>($/) { make Int.create(pir::ord(~$/[0])) }
 
-method float($/) { make Term.from_data("{$<dec_number>.ast}") }
+method float($/) { make Float.create($<dec_number>.ast) }
 
 method circumfix:sym<( )>($/) { make $<EXPR>.ast }
 method EXPR($/, $tag?) {

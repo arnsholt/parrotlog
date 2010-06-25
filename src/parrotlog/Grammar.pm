@@ -102,7 +102,9 @@ token read_term {
 
 token directive {
     <directive=.EXPR> <.end>
-    <?{ $<directive>.ast.functor eq ':-' && $<directive>.ast.arity == 1 }>
+    <?{ $<directive> ~~ Term
+     && $<directive>.ast.functor eq ':-'
+     && $<directive>.ast.arity == 1 }>
 }
 
 token clause { <clause=.EXPR> <.end> }
