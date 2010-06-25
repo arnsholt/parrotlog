@@ -146,11 +146,22 @@ class Term is PrologTerm {
         pir::say("$indent$!functor/$!arity");
 
         for @!args -> $arg {
-            if $arg ~~ Term { $arg.output($indent ~ '  '); }
-            elsif $arg ~~ Variable { $arg.output($indent ~ '  '); }
+            if $arg ~~ PrologTerm { $arg.output($indent ~ '  '); }
             else { pir::say("$indent  $arg (Non T/V)"); }
         }
     }
+}
+
+class Int is PrologTerm {
+    method variable_set() { return pir::null__p; }
+    method existential_vars() { return pir::null_p; }
+    method free_vars($t) { return pir::null__p; }
+}
+
+class Float is PrologTerm {
+    method variable_set() { return pir::null__p; }
+    method existential_vars() { return pir::null_p; }
+    method free_vars($t) { return pir::null__p; }
 }
 
 sub unify($paths, $x, $y) {
