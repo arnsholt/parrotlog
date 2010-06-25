@@ -87,6 +87,20 @@ class Variable is PrologTerm {
         $!value := Undef;
     }
 
+    method variable_set() {
+        my $set := Set.new;
+        $set.add: self;
+        return $set;
+    }
+
+    method existential_vars() { return Set.new; }
+
+    method free_vars($v) {
+        # If the variable set of V contains the var the free variable set is
+        # empty, else it's the variable set of the var.
+        return $v.variable_set.contains(self) ?? Set.new !! self.variable_set;
+    }
+
     method output($indent = '') {
         pir::say($indent ~ ($!name ?? $!name !! '_'));
     }
@@ -141,6 +155,46 @@ class Term is PrologTerm {
 
     method value() { return self; }
 
+    method variable_set() {
+        if $!arity < 1 {
+            # Atoms have an empty variable set.
+            return Set.new;
+        }
+        else {
+            my $set := Set.new;
+            for @!arguments -> $term {
+                $set.union: $term.variable_set;
+            }
+
+            return $set;
+        }
+    }
+
+    method existential_vars() {
+        if $!arity == 2 && $!functor eq '^' {
+            my $set := Set.new;
+            $set.union: $!args[0].variable_set;
+            $set.union: $!args[1].existential_vars;
+            return $set;
+        }
+        else {
+            return Set.new;
+        }
+    }
+
+    method free_vars($v) {
+        # FV(T, V) = VS(T) - BV, BV = VS(V) u EV(T)
+        my $set := Set.new;
+        $set.union: self.variable_set;
+
+        my $bv := Set.new;
+        $bv.union: $v.variable_set;
+        $bv.union: self.existential_vars;
+
+        $set.diff: $bv;
+        return $set;
+    }
+
     # Pretty print.
     method output($indent = '') {
         pir::say("$indent$!functor/$!arity");
@@ -169,9 +223,9 @@ class Int is PrologTerm {
         return $!value;
     }
 
-    method variable_set() { return pir::null__p; }
-    method existential_vars() { return pir::null__p; }
-    method free_vars($t) { return pir::null__p; }
+    method variable_set() { return Set.new; }
+    method existential_vars() { return Set.new; }
+    method free_vars($t) { return Set.new; }
 
     method output($indent = '') { pir::say("$indent$!value"); }
 }
@@ -193,11 +247,29 @@ class Float is PrologTerm {
         return $!value;
     }
 
-    method variable_set() { return pir::null__p; }
-    method existential_vars() { return pir::null__p; }
-    method free_vars($t) { return pir::null__p; }
+    method variable_set() { return Set.new; }
+    method existential_vars() { return Set.new; }
+    method free_vars($t) { return Set.new; }
 
     method output($indent = '') { pir::say("$indent$!value"); }
+}
+
+class Set {
+    method union($other) {
+        pir::die("TODO: Set.union");
+    }
+
+    method diff($other) {
+        pir::die("TODO: Set.diff");
+    }
+
+    method add(*@items) {
+        pir::die("TODO: Set.add");
+    }
+
+    method contains($item) {
+        pir::die("TODO: Set.contains");
+    }
 }
 
 sub unify($paths, $x, $y) {
