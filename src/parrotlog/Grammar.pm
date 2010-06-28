@@ -176,6 +176,8 @@ proto token name_token { <...> }
 token name_token:sym<ident> { $<name>=[<.lower> <.alnum>*] }
 token name_token:sym<graphic> { $<name>=[<+[\\]+graphic_char>+] }
 token name_token:sym<quoted> { <?[\']> <str=.quote_EXPR> }
+token name_token:sym<;> { <sym> }
+token name_token:sym<!> { <sym> }
 
 # Section 6.4.2.1, quoted characters
 # Essentially quote_atom from HLL::Grammar, but we allow <stopper> inside the

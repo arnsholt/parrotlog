@@ -114,6 +114,8 @@ method comma($/) { make ',' } # To make the EXPR code happy
 method name_token:sym<ident>($/) { make ~$<name> }
 method name_token:sym<graphic>($/) { make ~$<name> }
 method name_token:sym<quoted>($/) { make $<str>.ast }
+method name_token:sym<;>($/) { make ~$<sym> }
+method name_token:sym<!>($/) { make ~$<sym> }
 
 method quote_EXPR($/) { make $<quote_delimited>.ast }
 method quote_delimited($/) {
