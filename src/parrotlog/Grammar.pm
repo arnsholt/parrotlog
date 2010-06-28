@@ -135,19 +135,19 @@ token variable:sym<named> { $<name>=['_' <.alnum>+ | <.upper> <.alnum>*] }
 token variable:sym<anon> { '_' }
 
 # Section 6.3.3, compound terms - functional notation
-token term:sym<compound> { <atom> <.open> <exp>**<.comma> <.close> }
+token term:sym<compound> { <atom> <.open> ~ <.close> <exp>**<.comma> }
 proto token exp { <...> }
 token exp:sym<expr> { <.ws> <EXPR('0203')> }
 token exp:sym<op> { <.ws> <atom> <?{ is_op($<atom>.ast) && $<atom>.ast ne ',' }> }
 
 # Section 6.3.5, compound terms - list notation
-token term:sym<list> { <.open_list> <items> <.close_list> }
+token term:sym<list> { <.open_list> ~ <.close_list> <items> }
 proto token items { <...> }
 token items:sym<more> { <exp> <.comma> <items> }
 token items:sym<last> { <car=.exp> [<.ht> <cdr=.exp>]? }
 
 # Section 6.3.6, compound terms - curly bracket notation
-token term:sym<curly> { <.open_curly> <EXPR> <.close_curly> }
+token term:sym<curly> { <.open_curly> ~ <.close_curly> <EXPR> }
 
 # Section 6.4, tokens
 token name { <.ws> <name_token> }
