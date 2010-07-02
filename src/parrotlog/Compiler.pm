@@ -40,11 +40,14 @@ method past($source, *%adverbs) {
 
         $past.push: $block;
 
-        for $clauses -> $clause {
-            # TODO: Create PAST for each clause and stitch them together to
-            # make the whole predicate.
-        }
+        $block.push: compile_clause($_) for $clauses;
     }
 
     return $past;
+}
+
+method compile_clause($clause) {
+    # TODO: Create PAST for each clause and stitch them together to
+    # make the whole predicate.
+    my $past := PAST::Stmts.new();
 }
