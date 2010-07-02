@@ -16,18 +16,34 @@ method past($source, *%adverbs) {
     my $past := PAST::Block.new(:hll<parrotlog>, :blocktype<immediate>);
 
     for $ast -> $predicate {
+        my $clauses := $ast{$predicate};
         my $block := PAST::Block.new(:name($predicate));
-        # TODO: Replace with a single parameter variable for each argument to
-        # the predicate.
+        my @args;
+
+        # Do some digging around to find out which predicate we're defining.
+        my $a_clause := $clauses[0];
+        $a_clause := $a_clause.args[0]
+            if $a_clause.arity == 2 && $a_clause.functor eq ':-';
+        my $functor := $a_clause.functor;
+        my $arity   := $a_clause.arity;
+
         # Arguments can be named simply arg1..argn, because Prolog variables
         # can't start with a lowercase letter so all those names are free for
         # us to use internally.
-        my $args := PAST::Var.new(:name<args>, :scope<parameter>, :slurpy);
+        my $i := 0;
+        while $i < $arity {
+            $i++;
+            my $arg := PAST::Var.new(:name("arg" ~ $i), :scope<parameter>);
+            @args.push: $arg;
+            $block.push: $arg;
+        }
 
-        $block.push: $args;
         $past.push: $block;
 
-        pir::say($predicate);
+        for $clauses -> $clause {
+            # TODO: Create PAST for each clause and stitch them together to
+            # make the whole predicate.
+        }
     }
 
     return $past;
