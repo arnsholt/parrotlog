@@ -153,6 +153,10 @@ class Term is PrologTerm {
         return @!args;
     }
 
+    method predicate_spec() {
+        return "$!functor/$!arity";
+    }
+
     method value() { return self; }
 
     method variable_set() {

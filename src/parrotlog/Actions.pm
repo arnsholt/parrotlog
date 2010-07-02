@@ -1,6 +1,11 @@
 class Parrotlog::Actions is HLL::Actions;
 
 method TOP($/) {
+    # We make the AST a hash of arrays, with a single hash entry for each
+    # predicate.
+    # XXX: How this will interact with queries typed on the REPL remains to be
+    # seen.
+    my %ast;
     for $<clause> -> $ast {
 =begin spec
 
@@ -12,7 +17,15 @@ arity. foo cannot be a built-in or a control construct.
 =end spec
         $ast := $ast.ast;
         $ast.output;
+
+        my $spec := $ast.arity == 2 && $ast.functor??
+                        $ast.args[0].predicate_spec !!
+                        $ast.predicate_spec;
+        %ast{$spec} := [] if !pir::defined(%ast{$spec});
+        %ast{$spec}.push: $ast;
     }
+
+    make %ast;
 }
 
 # XXX: Directive handling should probably be folded into the grammar, rather
