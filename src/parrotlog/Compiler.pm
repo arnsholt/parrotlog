@@ -12,13 +12,25 @@ method past($source, *%adverbs) {
     my $ast := $source.ast;
     # The top-level driver.
     my $past := PAST::Block.new(:hll<parrotlog>, :blocktype<immediate>);
-    #$past.push: PAST::Op(:pasttype<call>, :name<main/0>, );
-    my $paths := self.call_internal('paths');
-    $past.push: PAST::Op.new(:name<main/0>, :pasttype<call>, $paths);
 
+    # Set up the backtracking stack.
+    $past.push: PAST::Var.new(:scope<register>, :name<paths>, :isdecl,
+        :viviself(self.call_internal: 'paths'));
+    my $paths := PAST::Var.new(:scope<register>, :name<paths>,
+        self.call_internal('paths'));
+
+    # Call main/0 on the initial pass, jump to error condition on backtrack.
+    # TODO: The error message could use some love. =)
+    $past.push: PAST::Op.new(:pasttype<unless>,
+        $paths,
+        PAST::Op.new(:inline('    die "OHNOES TEH MANATEE"')), # XXX: Final failure code goes here.
+        PAST::Op.new(:name<main/0>, :pasttype<call>, $paths));
+    $past.push: PAST::Op.new(:inline("say 'hello'"));
+
+    # Compile all the clauses.
     for $ast -> $predicate {
         my $clauses := $ast{$predicate};
-        my $block := PAST::Block.new(:name($predicate));
+        my $block := PAST::Block.new(:name($predicate), :blocktype<declaration>);
         my @args;
 
         # Do some digging around to find out which predicate we're defining.
@@ -52,20 +64,15 @@ method past($source, *%adverbs) {
 }
 
 method compile_clause($clause, @args) {
-    # TODO: Create PAST for each clause and stitch them together to
-    # make the whole predicate.
-    my $past := PAST::Stmts.new();
-    #my $choicepoint := PAST::Op.new(:pasttype<if>, self.choicepoint(@args[0]), $if);
-}
-
-method choicepoint($paths) {
-    my $past;
-
-    #return PAST::Op.new(:pasttype<call>, $function, $paths);
+    # For now, we just say something and fail. TODO: Actual compilation.
+    return PAST::Stmts.new(
+        PAST::Op.new(:inline("say 'hallo!'")),
+        self.call_internal('fail', @args[0])
+    );
 }
 
 method call_internal($function, *@args) {
-    return PAST::Op.new(:pasttype<call>, 
+    return PAST::Op.new(:pasttype<call>,
         # XXX: This has the potential for breakage if weird names are passed in.
         PAST::Op.new(:inline("    %r = get_root_global ['_parrotlog'], '$function'")),
         |@args);

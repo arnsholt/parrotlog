@@ -89,7 +89,7 @@
 .end
 
 # Prune the search tree up to the mark.
-.sub cut
+.sub 'cut'
     .param pmc paths
     .local pmc cc
     .local pmc fail_cc

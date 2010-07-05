@@ -16,7 +16,6 @@ arity. foo cannot be a built-in or a control construct.
 
 =end spec
         $ast := $ast.ast;
-        $ast.output;
 
         my $spec := $ast.arity == 2 && $ast.functor eq ':-'??
                         $ast.args[0].predicate_spec !!
