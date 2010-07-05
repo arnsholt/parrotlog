@@ -11,9 +11,10 @@ INIT {
 method past($source, *%adverbs) {
     my $ast := $source.ast;
     # The top-level driver.
-    # TODO: Make it actually do anything. For starters I think making it
-    # invoke a goal main/0 will be a good place to start.
     my $past := PAST::Block.new(:hll<parrotlog>, :blocktype<immediate>);
+    #$past.push: PAST::Op(:pasttype<call>, :name<main/0>, );
+    my $paths := self.call_internal('paths');
+    $past.push: PAST::Op.new(:name<main/0>, :pasttype<call>, $paths);
 
     for $ast -> $predicate {
         my $clauses := $ast{$predicate};
@@ -31,6 +32,7 @@ method past($source, *%adverbs) {
         # can't start with a lowercase letter so all those names are free for
         # us to use internally.
         my $i := 0;
+        @args.push: PAST::Var.new(:name<paths>, :scope<parameter>);
         while $i < $arity {
             $i++;
             my $arg := PAST::Var.new(:name("arg" ~ $i), :scope<parameter>);
@@ -40,14 +42,31 @@ method past($source, *%adverbs) {
 
         $past.push: $block;
 
-        $block.push: compile_clause($_) for $clauses;
+        #$block.push: compile_clause($_) for $clauses;
+        for $clauses {
+            $block.push: self.compile_clause($_, @args)
+        }
     }
 
     return $past;
 }
 
-method compile_clause($clause) {
+method compile_clause($clause, @args) {
     # TODO: Create PAST for each clause and stitch them together to
     # make the whole predicate.
     my $past := PAST::Stmts.new();
+    #my $choicepoint := PAST::Op.new(:pasttype<if>, self.choicepoint(@args[0]), $if);
+}
+
+method choicepoint($paths) {
+    my $past;
+
+    #return PAST::Op.new(:pasttype<call>, $function, $paths);
+}
+
+method call_internal($function, *@args) {
+    return PAST::Op.new(:pasttype<call>, 
+        # XXX: This has the potential for breakage if weird names are passed in.
+        PAST::Op.new(:inline("    %r = get_root_global ['_parrotlog'], '$function'")),
+        |@args);
 }

@@ -1,4 +1,4 @@
-.HLL 'Parrotlog'
+.HLL '_parrotlog'
 
 .namespace []
 
