@@ -44,12 +44,13 @@ method past($source, *%adverbs) {
         # can't start with a lowercase letter so all those names are free for
         # us to use internally.
         my $i := 0;
-        @args.push: PAST::Var.new(:name<paths>, :scope<parameter>);
+        $block.push: PAST::Var.new(:name<paths>, :scope<parameter>);
+        @args.push: PAST::Var.new(:name<paths>, :scope<lexical>);
         while $i < $arity {
             $i++;
-            my $arg := PAST::Var.new(:name("arg" ~ $i), :scope<parameter>);
-            @args.push: $arg;
-            $block.push: $arg;
+            my $name := "arg" ~ $i;
+            $block.push: PAST::Var.new(:name($name), :scope<parameter>);
+            @args.push: PAST::Var.new(:name($name), :scope<lexical>);
         }
 
         $past.push: $block;
@@ -66,6 +67,7 @@ method past($source, *%adverbs) {
 method compile_clause($clause, @args) {
     # For now, we just say something and fail. TODO: Actual compilation.
     return PAST::Stmts.new(
+        self.call_internal('mark', @args[0]),
         PAST::Op.new(:inline("say 'hallo!'")),
         self.call_internal('fail', @args[0])
     );
