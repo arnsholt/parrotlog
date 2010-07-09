@@ -23,9 +23,8 @@ method past($source, *%adverbs) {
     # TODO: The error message could use some love. =)
     $past.push: PAST::Op.new(:pasttype<unless>,
         $paths,
-        PAST::Op.new(:inline('    die "OHNOES TEH MANATEE"')), # XXX: Final failure code goes here.
+        PAST::Op.new(:inline('    say "# OHNOES TEH MANATEE"')), # XXX: Final failure code goes here.
         PAST::Op.new(:name<main/0>, :pasttype<call>, $paths));
-    $past.push: PAST::Op.new(:inline("say 'hello'"));
 
     # Compile all the clauses.
     for $ast -> $predicate {
@@ -68,7 +67,7 @@ method compile_clause($clause, @args) {
     # For now, we just say something and fail. TODO: Actual compilation.
     return PAST::Stmts.new(
         self.call_internal('mark', @args[0]),
-        PAST::Op.new(:inline("say 'hallo!'")),
+        PAST::Op.new(:inline("say '# hallo!'")),
         self.call_internal('fail', @args[0])
     );
 }
