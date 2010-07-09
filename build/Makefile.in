@@ -44,7 +44,6 @@ PARROTLOG_OTHER_A_PIR    = src/gen/parrotlog-actions.pir
 PARROTLOG_OTHER_C_PIR    = src/gen/parrotlog-compiler.pir
 PARROTLOG_OTHER_R_PIR    = src/gen/parrotlog-runtime.pir
 PARROTLOG_OTHER_CT_PIR   = src/gen/parrotlog-coretest.pir
-PARROTLOG_OTHER_PAST_PIR = src/gen/parrotlog-past.pir
 
 PARROTLOG_OTHER_SOURCES = \
     src/parrotlog.pir \
@@ -53,7 +52,6 @@ PARROTLOG_OTHER_SOURCES = \
     $(PARROTLOG_OTHER_C_PIR) \
     $(PARROTLOG_OTHER_R_PIR) \
 	$(PARROTLOG_OTHER_CT_PIR) \
-	$(PARROTLOG_OTHER_PAST_PIR) \
 
 CLEANUPS = \
   *.manifest \
@@ -82,8 +80,6 @@ $(PARROTLOG_OTHER_R_PIR): src/parrotlog/Runtime.pm
 	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_R_PIR) src/parrotlog/Runtime.pm
 $(PARROTLOG_OTHER_CT_PIR): src/parrotlog/Coretest.pm
 	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_CT_PIR) src/parrotlog/Coretest.pm
-$(PARROTLOG_OTHER_PAST_PIR): src/parrotlog/PAST.pm
-	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_PAST_PIR) src/parrotlog/PAST.pm
 
 ## testing
 
