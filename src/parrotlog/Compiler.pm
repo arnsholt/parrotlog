@@ -54,9 +54,6 @@ method past($source, *%adverbs) {
         $past.push: $block;
 
         # Stitch together the different branches of the directive.
-        #my $ifs := PAST::Op.new(:pasttype<unless>,
-        #    self.call_internal('choicepoint', @args[0]));
-        #$block.push: $ifs;
         my $target := $block;
         for $clauses {
             my $if := PAST::Op.new(:pasttype<unless>,
@@ -64,9 +61,6 @@ method past($source, *%adverbs) {
             $if.push: self.compile_clause($_, @args);
             $target.push: $if;
             $target := $if;
-            #$ifs.push: self.compile_clause($_, @args);
-            #$ifs.push: $new_if;
-            #$ifs := $new_if;
         }
         # As the final option when backtracking, fail.
         $target.push: self.call_internal('fail', @args[0]);
@@ -128,33 +122,53 @@ method compile_body($ast, $paths) {
 
         # Table 7, Principal functors and control structures gives the terms
         # that get special handling.
+        # Section 7.8.5, ','/2 - conjunction.
         if $arity == 2 && $functor eq ',' {
-            #pir::die(',/2 not implemented yet');
             return PAST::Stmts.new(
                 self.compile_body($ast.args[0], $paths),
                 self.compile_body($ast.args[1], $paths));
         }
+        # Section 7.8.6, ';' - disjunction.
+        # Section 7.8.8, ';'/2 - if-then-else.
         elsif $arity == 2 && $functor eq ';' {
-            pir::die(';/2 not implemented yet');
+            # TODO: ;/2 with ->/2 as first argument (7.8.8).
+            return PAST::Op.new(:pasttype<unless>,
+                self.call_internal('choicepoint', $paths),
+                self.compile_body($ast.args[0], $paths),
+                self.compile_body($ast.args[1], $paths));
         }
+        # Section 7.8.7, '->'/2 - if-then.
         elsif $arity == 2 && $functor eq '->' {
             pir::die('->/2 not implemented yet');
         }
+        # Section 7.8.4, !/0 - cut.
         elsif $arity == 0 && $functor eq '!' {
-            return self.call_internal('cut', $paths);
+            # On a cut we have to create a new mark on the stack so that a
+            # subsequent cut won't mess with the backtracking info of a
+            # predicate farther up the call stack.
+            # XXX: I think previously executed predicates may leave stuff on
+            # the stack that will interfere with cut. Must investigate.
+            return PAST::Stmts.new(
+                self.call_internal('cut', $paths),
+                self.call_internal('mark', $paths));
         }
+        # Section 7.8.3, call/1.
         elsif $arity == 1 && $functor eq 'call' {
             pir::die('call/1 not implemented yet');
         }
+        # Section 7.8.1, true/0.
         elsif $arity == 0 && $functor eq 'true' {
             return PAST::Stmts.new();
         }
+        # Section 7.8.2, fail/0.
         elsif $arity == 0 && $functor eq 'fail' {
             return self.call_internal('fail', $paths);
         }
+        # Section 7.8.9 - catch/3.
         elsif $arity == 3 && $functor eq 'catch' {
             pir::die('catch/3 not implemented yet');
         }
+        # Section 7.8.10 - throw/1.
         elsif $arity == 1 && $functor eq 'throw' {
             pir::die('throw/1 not implemented yet');
         }
