@@ -98,7 +98,7 @@ method term:sym<variable>($/) { make $<variable>.ast }
 
 method variable:sym<named>($/) { 
     my $var := Variable.new;
-    $var.name: $<name>;
+    $var.name: ~$<name>;
     make $var;
 }
 method variable:sym<anon>($/) { make Variable.new }
