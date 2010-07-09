@@ -259,20 +259,35 @@ class Float is PrologTerm {
 }
 
 class Set {
+    has %!set;
+
     method union($other) {
-        pir::die("TODO: Set.union");
+        self.add(|$other.contents);
     }
 
     method diff($other) {
-        pir::die("TODO: Set.diff");
+        for $other.contents -> $key {
+            pir::delete__vQS(%!set, $key);
+        }
     }
 
     method add(*@items) {
-        pir::die("TODO: Set.add");
+        for @items -> $item {
+            %!set{$item} := 1;
+        }
     }
 
     method contains($item) {
-        pir::die("TODO: Set.contains");
+        return pir::exists__iQP(%!set, $item);
+    }
+
+    method contents() {
+        my @keys;
+        for %!set {
+            @keys.push: $_.key;
+        }
+
+        return @keys;
     }
 }
 

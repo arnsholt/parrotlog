@@ -65,6 +65,13 @@ sub plan($count?) {
 }
 
 sub coretest() {
+    unification();
+    runtime_classes();
+
+    plan();
+}
+
+sub unification() {
     my $x := Variable.new;
     $tests := 0;
     ok(1, "creating empty Variable");
@@ -207,8 +214,6 @@ sub coretest() {
     else {
         ok(1, "Survived backtracking over mark.");
     }
-
-    plan();
 }
 
 # Chocoblob example from Graham's book. Exhaustive version. (page 300)
@@ -280,4 +285,35 @@ sub coin($city, $store, $box) {
     else {
         return 0;
     }
+}
+
+sub runtime_classes() {
+    my $set := Set.new;
+    ok(1, "creating new Set");
+
+    $set.add: 'a', 'b', 'c';
+    ok(+$set.contents == 3, 'set has 3 elements after adding <a b c>');
+    ok($set.contains('a'), 'contains a');
+    ok($set.contains('b'), 'contains b');
+    ok($set.contains('c'), 'contains c');
+
+    my $other := Set.new;
+    $other.add: 'b', 'c', 'd';
+
+    $set.union: $other;
+    ok(+$set.contents == 4, '<a b c> U <b c d> has length 4');
+    ok($set.contains('a'), 'contains a');
+    ok($set.contains('b'), 'contains b');
+    ok($set.contains('c'), 'contains c');
+    ok($set.contains('d'), 'contains d');
+
+    $set.diff: $other;
+    ok(+$set.contents == 1, '<a b c d> - <b c d> has length 1');
+    ok($set.contains('a'), 'contains a');
+
+    $set := Set.new;
+    $set.add: 'a', 'b', 'c';
+    $set.diff: $other;
+    ok(+$set.contents == 1, '<a b c> - <b c d> has length 1');
+    ok($set.contains('a'), 'contains a');
 }
