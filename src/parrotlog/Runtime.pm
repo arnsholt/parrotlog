@@ -89,7 +89,8 @@ class Variable is PrologTerm {
 
     method variable_set() {
         my $set := Set.new;
-        $set.add: self;
+        # Only add self if it's a named variable.
+        $set.add: $!name if pir::defined($!name);
         return $set;
     }
 
@@ -166,7 +167,7 @@ class Term is PrologTerm {
         }
         else {
             my $set := Set.new;
-            for @!arguments -> $term {
+            for @!args -> $term {
                 $set.union: $term.variable_set;
             }
 
