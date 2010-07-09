@@ -18,6 +18,8 @@ class PrologTerm {
 
     # Section 7.1.1.4, free variables set of a term
     method free_vars($term) { pir::die("virtual method!"); }
+
+    method past() { pir::die("virtual method!"); }
 }
 
 # Variables and terms. The variable code is largely inspired by the Perl code
@@ -104,6 +106,19 @@ class Variable is PrologTerm {
 
     method output($indent = '') {
         pir::say($indent ~ ($!name ?? $!name !! '_'));
+    }
+
+    method past() {
+        my $obj :=  PAST::Op.new(
+            :inline("    %r = root_new ['_parrotlog'; 'Variable']"));
+        if pir::defined($!name) {
+            return PAST::Op.new(:pasttype<callmethod>, :name<name>,
+                $obj,
+                PAST::Val.new(:value($!name)));
+        }
+        else {
+            return $obj;
+        }
     }
 }
 
@@ -209,6 +224,18 @@ class Term is PrologTerm {
             else { pir::say("$indent  $arg (Non T/V)"); }
         }
     }
+
+    method past() {
+        my $class := PAST::Op.new(
+            :inline("    %r = get_root_global ['_parrotlog'], 'Term'"));
+        my $call := PAST::Op.new(:name<from_data>, :pasttype<callmethod>, $class);
+        $call.push: PAST::Val.new(:value($!functor));
+        for @!args -> $arg {
+            $call.push: $arg.past;
+        }
+
+        return $call;
+    }
 }
 
 class Int is PrologTerm {
@@ -233,6 +260,16 @@ class Int is PrologTerm {
     method free_vars($t) { return Set.new; }
 
     method output($indent = '') { pir::say("$indent$!value"); }
+
+    method past() {
+        my $class := PAST::Op.new(
+            :inline("    %r = get_root_global ['_parrotlog'], 'Int'"));
+        my $call := PAST::Op.new(:name<create>, :pasttype<callmethod>,
+            $class,
+            PAST::Val.new(:value($!value)));
+
+        return $call;
+    }
 }
 
 class Float is PrologTerm {
@@ -257,6 +294,16 @@ class Float is PrologTerm {
     method free_vars($t) { return Set.new; }
 
     method output($indent = '') { pir::say("$indent$!value"); }
+
+    method past() {
+        my $class := PAST::Op.new(
+            :inline("    %r = get_root_global ['_parrotlog'], 'Float'"));
+        my $call := PAST::Op.new(:name<create>, :pasttype<callmethod>,
+            $class,
+            PAST::Val.new(:value($!value)));
+
+        return $call;
+    }
 }
 
 class Set {

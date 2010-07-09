@@ -16,8 +16,7 @@ method past($source, *%adverbs) {
     # Set up the backtracking stack.
     $past.push: PAST::Var.new(:scope<register>, :name<paths>, :isdecl,
         :viviself(self.call_internal: 'paths'));
-    my $paths := PAST::Var.new(:scope<register>, :name<paths>,
-        self.call_internal('paths'));
+    my $paths := PAST::Var.new(:scope<register>, :name<paths>);
 
     # Call main/0 on the initial pass, jump to error condition on backtrack.
     # TODO: The error message could use some love. =)
@@ -54,7 +53,8 @@ method past($source, *%adverbs) {
 
         $past.push: $block;
 
-        #$block.push: compile_clause($_) for $clauses;
+        # TODO: Figure out a sensible way to stitch together the different
+        # branches of the predicate.
         for $clauses {
             $block.push: self.compile_clause($_, @args)
         }
@@ -64,12 +64,39 @@ method past($source, *%adverbs) {
 }
 
 method compile_clause($clause, @args) {
-    # For now, we just say something and fail. TODO: Actual compilation.
-    return PAST::Stmts.new(
-        self.call_internal('mark', @args[0]),
-        PAST::Op.new(:inline("say '# hallo!'")),
-        self.call_internal('fail', @args[0])
-    );
+    my $head;
+    my $body;
+
+    if $clause.arity == 2 && $clause.functor eq ':-' {
+        $head := $clause.args[0];
+        $body := $clause.args[0];
+    }
+    else {
+        $head := $clause;
+    }
+
+    my $past := PAST::Stmts.new;
+    $past.push: self.call_internal('mark', @args[0]);
+
+    my %vars;
+    for $clause.variable_set.contents -> $var {
+        $past.push: PAST::Var.new(:name($var), :isdecl, :scope<register>,
+            :viviself(self.variable($var)));
+        %vars{$var} := PAST::Var.new(:name($var), :scope<register>);
+    }
+
+    my $i := 0;
+    for $head.args -> $arg {
+        $past.push: self.call_internal('unify',
+            @args[$i+1],
+            $head.args[$i].past);
+        $i++;
+    }
+
+    # TODO: Compile body.
+    $past.push: self.call_internal('fail', @args[0]);
+
+    return $past;
 }
 
 method call_internal($function, *@args) {
@@ -77,4 +104,17 @@ method call_internal($function, *@args) {
         # XXX: This has the potential for breakage if weird names are passed in.
         PAST::Op.new(:inline("    %r = get_root_global ['_parrotlog'], '$function'")),
         |@args);
+}
+
+method variable($name?) {
+    my $obj :=  PAST::Op.new(
+        :inline("    %r = root_new ['_parrotlog'; 'Variable']"));
+    if pir::defined($name) {
+        return PAST::Op.new(:pasttype<callmethod>, :name<name>,
+            $obj,
+            PAST::Val.new(:value($name)));
+    }
+    else {
+        return $obj;
+    }
 }
