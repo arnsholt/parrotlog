@@ -53,11 +53,23 @@ method past($source, *%adverbs) {
 
         $past.push: $block;
 
-        # TODO: Figure out a sensible way to stitch together the different
-        # branches of the predicate.
+        # Stitch together the different branches of the directive.
+        #my $ifs := PAST::Op.new(:pasttype<unless>,
+        #    self.call_internal('choicepoint', @args[0]));
+        #$block.push: $ifs;
+        my $target := $block;
         for $clauses {
-            $block.push: self.compile_clause($_, @args)
+            my $if := PAST::Op.new(:pasttype<unless>,
+                self.call_internal('choicepoint', @args[0]));
+            $if.push: self.compile_clause($_, @args);
+            $target.push: $if;
+            $target := $if;
+            #$ifs.push: self.compile_clause($_, @args);
+            #$ifs.push: $new_if;
+            #$ifs := $new_if;
         }
+        # As the final option when backtracking, fail.
+        $target.push: self.call_internal('fail', @args[0]);
     }
 
     return $past;
@@ -69,7 +81,7 @@ method compile_clause($clause, @args) {
 
     if $clause.arity == 2 && $clause.functor eq ':-' {
         $head := $clause.args[0];
-        $body := $clause.args[0];
+        $body := $clause.args[1];
     }
     else {
         $head := $clause;
@@ -85,6 +97,7 @@ method compile_clause($clause, @args) {
         %vars{$var} := PAST::Var.new(:name($var), :scope<register>);
     }
 
+    # Section 7.6.1, converting a term to the head of a clause.
     my $i := 0;
     for $head.args -> $arg {
         $past.push: self.call_internal('unify',
@@ -94,9 +107,64 @@ method compile_clause($clause, @args) {
     }
 
     # TODO: Compile body.
-    $past.push: self.call_internal('fail', @args[0]);
+    #$past.push: self.call_internal('fail', @args[0]);
+    $past.push: self.compile_body($body, @args[0]) if pir::defined($body);
 
     return $past;
+}
+
+# Section 7.6.2, converting a term to the body of a clause.
+method compile_body($ast, $paths) {
+    my $class := pir::class__PP($ast).name;
+
+    if $class eq 'Variable' {
+        pir::die("Can't handle variable goals yet.");
+    }
+    elsif $class eq 'Term' {
+        # TODO
+        my $functor := $ast.functor;
+        my $arity := $ast.arity;
+        #pir::say($ast.output);
+
+        # Table 7, Principal functors and control structures gives the terms
+        # that get special handling.
+        if $arity == 2 && $functor eq ',' {
+            #pir::die(',/2 not implemented yet');
+            return PAST::Stmts.new(
+                self.compile_body($ast.args[0], $paths),
+                self.compile_body($ast.args[1], $paths));
+        }
+        elsif $arity == 2 && $functor eq ';' {
+            pir::die(';/2 not implemented yet');
+        }
+        elsif $arity == 2 && $functor eq '->' {
+            pir::die('->/2 not implemented yet');
+        }
+        elsif $arity == 0 && $functor eq '!' {
+            return self.call_internal('cut', $paths);
+        }
+        elsif $arity == 1 && $functor eq 'call' {
+            pir::die('call/1 not implemented yet');
+        }
+        elsif $arity == 0 && $functor eq 'true' {
+            return PAST::Stmts.new();
+        }
+        elsif $arity == 0 && $functor eq 'fail' {
+            return self.call_internal('fail', $paths);
+        }
+        elsif $arity == 3 && $functor eq 'catch' {
+            pir::die('catch/3 not implemented yet');
+        }
+        elsif $arity == 1 && $functor eq 'throw' {
+            pir::die('throw/1 not implemented yet');
+        }
+        else {
+            pir::die('Procedure calls not implemented yet');
+        }
+    }
+    else {
+        pir::die("Can't handle $class goals.");
+    }
 }
 
 method call_internal($function, *@args) {
