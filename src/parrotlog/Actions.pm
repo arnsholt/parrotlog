@@ -34,6 +34,9 @@ method directive($/) {
     if $directive.functor eq 'op' && $directive.arity == 3 {
         self.insert_op(|$directive.args);
     }
+    elsif $directive.functor eq 'coretest' && $directive.arity == 0 {
+        Coretest::coretest();
+    }
     else {
         pir::die("Unknown directive {$directive.functor}/{$directive.arity}");
     }
