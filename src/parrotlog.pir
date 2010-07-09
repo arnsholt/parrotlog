@@ -42,7 +42,11 @@
     .local pmc cc
 
     cc = pop paths
-    .tailcall cc()
+
+    # Parrot continuations don't take arguments, but fail (which serves as the
+    # mark) -does-, so we have to supply the argument in order to not fail
+    # when backtracking over the mark.
+    .tailcall cc(paths)
 .end
 
 # Create a new stack to backtrack over. This makes which continuations belong

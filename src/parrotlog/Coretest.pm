@@ -198,6 +198,16 @@ sub coretest() {
         ok(0, "circular unification - backtracked too far");
     }
 
+    # Check for regression. Backtracking over the mark should live.
+    $paths := paths();
+    if $paths {
+        mark($paths);
+        fail($paths);
+    }
+    else {
+        ok(1, "Survived backtracking over mark.");
+    }
+
     plan();
 }
 
