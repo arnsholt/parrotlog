@@ -100,33 +100,30 @@ method compile_clause($clause, @args) {
         $i++;
     }
 
-    # TODO: Compile body.
-    #$past.push: self.call_internal('fail', @args[0]);
-    $past.push: self.compile_body($body, @args[0]) if pir::defined($body);
+    $past.push: self.compile_body($body, @args[0], %vars)
+        if pir::defined($body);
 
     return $past;
 }
 
 # Section 7.6.2, converting a term to the body of a clause.
-method compile_body($ast, $paths) {
+method compile_body($ast, $paths, %vars) {
     my $class := pir::class__PP($ast).name;
 
     if $class eq 'Variable' {
         pir::die("Can't handle variable goals yet.");
     }
     elsif $class eq 'Term' {
-        # TODO
         my $functor := $ast.functor;
         my $arity := $ast.arity;
-        #pir::say($ast.output);
 
         # Table 7, Principal functors and control structures gives the terms
         # that get special handling.
         # Section 7.8.5, ','/2 - conjunction.
         if $arity == 2 && $functor eq ',' {
-            return PAST::Stmts.new(
-                self.compile_body($ast.args[0], $paths),
-                self.compile_body($ast.args[1], $paths));
+           return PAST::Stmts.new(
+                self.compile_body($ast.args[0], $paths, %vars),
+                self.compile_body($ast.args[1], $paths, %vars));
         }
         # Section 7.8.6, ';' - disjunction.
         # Section 7.8.8, ';'/2 - if-then-else.
@@ -134,8 +131,8 @@ method compile_body($ast, $paths) {
             # TODO: ;/2 with ->/2 as first argument (7.8.8).
             return PAST::Op.new(:pasttype<unless>,
                 self.call_internal('choicepoint', $paths),
-                self.compile_body($ast.args[0], $paths),
-                self.compile_body($ast.args[1], $paths));
+                self.compile_body($ast.args[0], $paths, %vars),
+                self.compile_body($ast.args[1], $paths, %vars));
         }
         # Section 7.8.7, '->'/2 - if-then.
         elsif $arity == 2 && $functor eq '->' {
@@ -173,7 +170,12 @@ method compile_body($ast, $paths) {
             pir::die('throw/1 not implemented yet');
         }
         else {
-            pir::die('Procedure calls not implemented yet');
+            #pir::die('Procedure calls not implemented yet');
+            my $name := $ast.functor ~ '/' ~ $ast.arity;
+            my @args;
+            @args.push: $paths;
+            for $ast.args -> $arg { @args.push: $arg.past; }
+            return PAST::Op.new(:pasttype<call>, :name($name), |@args);
         }
     }
     else {

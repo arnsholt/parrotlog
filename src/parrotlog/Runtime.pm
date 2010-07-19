@@ -104,8 +104,9 @@ class Variable is PrologTerm {
         return $v.variable_set.contains(self) ?? Set.new !! self.variable_set;
     }
 
-    method output($indent = '') {
-        pir::say($indent ~ ($!name ?? $!name !! '_'));
+    method output() {
+        # XXX: This can probably be improved.
+        return $!name ?? $!name !! '_';
     }
 
     method past() {
@@ -216,13 +217,22 @@ class Term is PrologTerm {
     }
 
     # Pretty print.
-    method output($indent = '') {
-        pir::say("$indent$!functor/$!arity");
+    method output() {
+        my $output := "$!functor";
 
-        for @!args -> $arg {
-            if $arg ~~ PrologTerm { $arg.output($indent ~ '  '); }
-            else { pir::say("$indent  $arg (Non T/V)"); }
+        # XXX: To be improved
+        if $!arity > 0 {
+            #$output := $output ~ "/$!arity";
+            $output := $output ~ '(';
+            $output := $output ~ @!args[0].output;
+            my $i := 1;
+            while $i < $!arity {
+                $output := $output ~ ', ' ~ @!args[$i++].output;
+            }
+            $output := $output ~ ')';
         }
+
+        return $output;
     }
 
     method past() {
@@ -259,7 +269,7 @@ class Int is PrologTerm {
     method existential_vars() { return Set.new; }
     method free_vars($t) { return Set.new; }
 
-    method output($indent = '') { pir::say("$indent$!value"); }
+    method output() { return "$!value" }
 
     method past() {
         my $class := PAST::Op.new(
@@ -293,7 +303,7 @@ class Float is PrologTerm {
     method existential_vars() { return Set.new; }
     method free_vars($t) { return Set.new; }
 
-    method output($indent = '') { pir::say("$indent$!value"); }
+    method output() { return "$!value" }
 
     method past() {
         my $class := PAST::Op.new(

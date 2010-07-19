@@ -1,3 +1,23 @@
+.HLL 'parrotlog'
+.namespace []
+
+.sub 'write/1'
+    .param pmc paths
+    .param pmc term
+
+    $S0 = term.'output'()
+    say $S0
+.end
+
+# print/1 is non-standard, but makes testing simpler.
+.sub 'print/1'
+    .param pmc paths
+    .param pmc term
+
+    $S0 = term.'output'()
+    print $S0
+.end
+
 .HLL '_parrotlog'
 
 .namespace []
@@ -113,8 +133,6 @@
 .include 'src/gen/parrotlog-runtime.pir'
 .include 'src/gen/parrotlog-coretest.pir'
 
-# To make it easy to test bits and pieces of the implementation, I cheat.
-# MAIN() is defined in Runtime.pm does the various bits of testing.
 .namespace []
 .sub 'main' :main
     .param pmc args
