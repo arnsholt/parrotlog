@@ -6,16 +6,13 @@
     .param pmc term
 
     $S0 = term.'output'()
-    say $S0
+    print $S0
 .end
 
-# print/1 is non-standard, but makes testing simpler.
-.sub 'print/1'
+.sub 'nl/0'
     .param pmc paths
-    .param pmc term
 
-    $S0 = term.'output'()
-    print $S0
+    print "\n"
 .end
 
 .HLL '_parrotlog'

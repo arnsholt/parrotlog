@@ -1,8 +1,11 @@
-main :- write('1..2'), first, second.
+main :- write('1..2'), nl,
+        first,
+        (second ; true), write('ok 2 - cut eliminates whole call chain'), nl.
 
-first :- fail; write('ok 1 - backtracks on fail/0').
+first :- fail; write('ok 1 - backtracks on fail/0'), nl.
 
 % Test that cut prunes the search tree all the way to the start of the current
 % predicate and ignores any predicates called.
-second :- other, !, fail ; write('ok - cut doesn''t backtrack into subordinate predicate').
-other  :- true ; print('not ').
+second :- other, !, fail.
+second :- write('not ').
+other  :- true.
