@@ -86,15 +86,17 @@ method compile_clause($clause, @args) {
 
     my %vars;
     for $clause.variable_set.contents -> $var {
-        $past.push: PAST::Var.new(:name($var), :isdecl, :scope<register>,
+        $past.push: PAST::Var.new(:name($var), :isdecl, :scope<lexical>,
             :viviself(self.variable($var)));
-        %vars{$var} := PAST::Var.new(:name($var), :scope<register>);
+        %vars{$var} := PAST::Var.new(:name($var), :scope<lexical>);
     }
 
     # Section 7.6.1, converting a term to the head of a clause.
     my $i := 0;
     for $head.args -> $arg {
-        $past.push: self.call_internal('unify',
+        $past.push: self.procedure_call(
+            '=/2',
+            @args[0],
             @args[$i+1],
             $head.args[$i].past);
         $i++;
@@ -143,8 +145,8 @@ method compile_body($ast, $paths, %vars) {
             # On a cut we have to create a new mark on the stack so that a
             # subsequent cut won't mess with the backtracking info of a
             # predicate farther up the call stack.
-            # XXX: I think previously executed predicates may leave stuff on
-            # the stack that will interfere with cut. Must investigate.
+            # BUG: Previously executed predicates leave stuff on the stack
+            # that interfere with cut. Must investigate.
             return PAST::Stmts.new(
                 self.call_internal('cut', $paths),
                 self.call_internal('mark', $paths));
@@ -170,17 +172,20 @@ method compile_body($ast, $paths, %vars) {
             pir::die('throw/1 not implemented yet');
         }
         else {
-            #pir::die('Procedure calls not implemented yet');
             my $name := $ast.functor ~ '/' ~ $ast.arity;
             my @args;
             @args.push: $paths;
             for $ast.args -> $arg { @args.push: $arg.past; }
-            return PAST::Op.new(:pasttype<call>, :name($name), |@args);
+            return self.procedure_call($name, |@args);
         }
     }
     else {
         pir::die("Can't handle $class goals.");
     }
+}
+
+method procedure_call($name, *@args) {
+    return PAST::Op.new(:pasttype<call>, :name($name), |@args);
 }
 
 method call_internal($function, *@args) {
@@ -194,9 +199,11 @@ method variable($name?) {
     my $obj :=  PAST::Op.new(
         :inline("    %r = root_new ['_parrotlog'; 'Variable']"));
     if pir::defined($name) {
-        return PAST::Op.new(:pasttype<callmethod>, :name<name>,
-            $obj,
-            PAST::Val.new(:value($name)));
+        return PAST::Stmts.new(
+            PAST::Op.new(:pasttype<callmethod>, :name<name>,
+                $obj,
+                PAST::Val.new(:value($name))),
+            $obj);
     }
     else {
         return $obj;

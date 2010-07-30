@@ -15,6 +15,15 @@
     print "\n"
 .end
 
+.sub '=/2'
+    .param pmc paths
+    .param pmc lhs
+    .param pmc rhs
+
+    $P0 = get_root_global ['_parrotlog'], 'unify'
+    $P0(paths, lhs, rhs)
+.end
+
 .HLL '_parrotlog'
 
 .namespace []

@@ -110,15 +110,11 @@ class Variable is PrologTerm {
     }
 
     method past() {
-        my $obj :=  PAST::Op.new(
-            :inline("    %r = root_new ['_parrotlog'; 'Variable']"));
         if pir::defined($!name) {
-            return PAST::Op.new(:pasttype<callmethod>, :name<name>,
-                $obj,
-                PAST::Val.new(:value($!name)));
+            return PAST::Var.new(:name($!name), :scope<lexical>);
         }
         else {
-            return $obj;
+            return PAST::Op.new(:inline("    %r = root_new ['_parrotlog'; 'Variable']"));
         }
     }
 }
@@ -422,7 +418,9 @@ sub unify($paths, $x, $y) {
         }
     }
     else {
-        pir::die("Attempting to unify() something that isn't a Variable or a Term");
+        my $xc := pir::class__PP($x);
+        my $yc := pir::class__PP($y);
+        pir::die("Attempting to unify() something that isn't a Variable or a Term ($xc, $yc)");
     }
 }
 
