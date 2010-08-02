@@ -346,6 +346,12 @@ class Set {
 }
 
 sub unify($paths, $x, $y) {
+    if !($x ~~ PrologTerm) || !($y ~~ PrologTerm) {
+        my $xc := pir::class__PP($x);
+        my $yc := pir::class__PP($y);
+        pir::die("Attempting to unify() something that isn't a Variable or a Term ($xc, $yc)");
+    }
+
     if $x =:= $y {
         # XXX: ATM NQP ignores bare returns, so we return a value.
         return 1;
@@ -369,10 +375,10 @@ sub unify($paths, $x, $y) {
 
         return 1;
     }
-    elsif ($x ~~ Variable && $y ~~ Term)
-    ||    ($x ~~ Term && $y ~~ Variable) {
+    elsif ($x ~~ Variable && $y ~~ PrologTerm)
+    ||    ($x ~~ PrologTerm && $y ~~ Variable) {
         # To simplify control flow.
-        if $x ~~ Term {
+        if !($x ~~ Variable) {
             my $tmp := $x;
             $x := $y;
             $y := $tmp;
@@ -417,10 +423,14 @@ sub unify($paths, $x, $y) {
             }
         }
     }
+    elsif $x ~~ Int && $y ~~ Int {
+        fail($paths) if $x.value != $y.value;
+    }
+    elsif $x ~~ Float && $y ~~ Float {
+        fail($paths) if $x.value != $y.value;
+    }
     else {
-        my $xc := pir::class__PP($x);
-        my $yc := pir::class__PP($y);
-        pir::die("Attempting to unify() something that isn't a Variable or a Term ($xc, $yc)");
+        fail($paths);
     }
 }
 
