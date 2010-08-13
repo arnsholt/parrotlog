@@ -48,7 +48,7 @@ method clause($/) { make $<clause>.ast }
 method insert_op($priority, $specifier, $operator) {
     # XXX: Check constraints on input arguments!
     $specifier := $specifier.functor;
-    $priority := $priority.functor;
+    $priority := $priority.value;
     $operator := $operator.functor; # XXX: Can also be a list.
     my $spec := "$specifier $priority";
 
