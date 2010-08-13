@@ -34,6 +34,9 @@ method directive($/) {
     if $directive.functor eq 'op' && $directive.arity == 3 {
         self.insert_op(|$directive.args);
     }
+    elsif $directive.functor eq 'dynamic' && $directive.arity == 1 {
+        # dynamic/1 can be safely ignored for now, I think.
+    }
     elsif $directive.functor eq 'coretest' && $directive.arity == 0 {
         Coretest::coretest();
     }
