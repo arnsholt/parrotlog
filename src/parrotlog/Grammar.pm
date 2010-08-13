@@ -173,7 +173,7 @@ token comment:sym<bracketed> {
 
 # Section 6.4.2, names
 proto token name_token { <...> }
-token name_token:sym<ident> { $<name>=[<.lower> <.alnum>*] }
+token name_token:sym<ident> { $<name>=[<.lower> <+alnum+[_]>*] }
 token name_token:sym<graphic> { $<name>=[<+[\\]+graphic_char>+] }
 token name_token:sym<quoted> { <?[\']> <str=.quote_EXPR> }
 token name_token:sym<;> { <sym> }
