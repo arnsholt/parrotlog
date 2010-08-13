@@ -38,10 +38,13 @@ INIT {
         $pri++;
     }
 
-    %prefix<:-> := 'fx 1200';
-    %prefix<?-> := 'fx 1200';
-    %prefix<->  := 'fy 200';
-    %prefix<\\> := 'fy 200';
+    %prefix<:->  := 'fx 1200';
+    %prefix<?->  := 'fx 1200';
+    # XXX: \+/1 isn't defined in the draft I have, only in the final standard,
+    # so this is currently a bit sketchy.
+    %prefix<\\+> := 'fy 900';
+    %prefix<->   := 'fy 200';
+    %prefix<\\>  := 'fy 200';
 
     %infix<:->    := 'xfx 1200';
     %infix{'-->'} := 'xfx 1200';
