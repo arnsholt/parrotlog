@@ -113,7 +113,8 @@ method compile_body($ast, $paths, %vars) {
     my $class := pir::class__PP($ast).name;
 
     if $class eq 'Variable' {
-        pir::die("Can't handle variable goals yet.");
+        # A goal X is equivalent to call(X).
+        return self.compile_body(Term.from_data('call', $ast), $paths, %vars);
     }
     elsif $class eq 'Term' {
         my $functor := $ast.functor;
@@ -166,6 +167,12 @@ method compile_body($ast, $paths, %vars) {
         # Section 7.8.9 - catch/3.
         elsif $arity == 3 && $functor eq 'catch' {
             pir::die('catch/3 not implemented yet');
+            # Given catch(Goal, Catcher, Recovery):
+            # 1) push_eh
+            # 2) call(Goal)
+            # 3a) If the call is successful, true
+            # 3b) If an error is thrown unify payload of exception with
+            # Catcher then execute Recovery.
         }
         # Section 7.8.10 - throw/1.
         elsif $arity == 1 && $functor eq 'throw' {
