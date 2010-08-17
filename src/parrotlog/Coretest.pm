@@ -27,7 +27,7 @@ sub ok($val, $msg?) {
 
 sub succeeds(&block, $msg?) {
     my $*paths := paths();
-    if $*paths {
+    if !pir::isnull($*paths) {
         &block();
         ok(1, $msg);
     }
@@ -37,8 +37,10 @@ sub succeeds(&block, $msg?) {
 }
 
 sub fails(&block, $msg?) {
-    my $*paths := paths();
-    if $*paths {
+    # XXX: Weird stuff happens when we backtrack if we set $*paths directly.
+    my $paths := paths();
+    if !pir::isnull($paths) {
+        my $*paths := $paths;
         &block();
         ok(0, $msg);
     }
@@ -78,7 +80,7 @@ sub unification() {
 
     # Test backtracking.
     my $paths := paths();
-    if $paths {
+    if !pir::isnull($paths) {
         # After initial call.
         ok(1, "creating paths");
         fail($paths);
@@ -120,7 +122,7 @@ sub unification() {
     unifies($free, $other_atom, "unification after binding");
 
     $paths := paths();
-    if $paths {
+    if !pir::isnull($paths) {
         my $x := Variable.new;
         my $y := Variable.new;
         my $z := Variable.new;
@@ -138,7 +140,7 @@ sub unification() {
     }
 
     $paths := paths();
-    if $paths {
+    if !pir::isnull($paths) {
         my $x := Variable.new;
         my $y := Variable.new;
         my $z := Variable.new;
@@ -156,7 +158,7 @@ sub unification() {
     }
 
     $paths := paths();
-    if $paths {
+    if !pir::isnull($paths) {
         my $x := Variable.new;
         my $y := Variable.new;
         my $z := Variable.new;
@@ -174,20 +176,25 @@ sub unification() {
     }
 
     $paths := paths();
-    if $paths {
+    if !pir::isnull($paths) {
         my $x := Variable.new;
-        my $y := choose($paths, $atom, $different);
-        unify($paths, $x, $y);
-        fail($paths) if $x.value.functor eq "atom";
+        my $y := Term.from_data('atom');
 
-        ok($x.value.functor eq "different", "backtracking over unification");
+        $paths := choicepoint($paths);
+        if !pir::isnull($paths) {
+            unify($paths, $x, $y);
+            fail($paths);
+        }
+        else {
+            ok(1, "backtracking over unification");
+        }
     }
     else {
         ok(0, "backtracking over unification - backtracked too far");
     }
 
     $paths := paths();
-    if $paths {
+    if !pir::isnull($paths) {
         my $x := Variable.new;
         my $y := Variable.new;
         my $z := Variable.new;
@@ -207,8 +214,8 @@ sub unification() {
 
     # Check for regression. Backtracking over the mark should live.
     $paths := paths();
-    if $paths {
-        mark($paths);
+    if !pir::isnull($paths) {
+        $paths := mark($paths);
         fail($paths);
     }
     else {
@@ -222,19 +229,30 @@ sub exhaustive_blob() {
     my $pings := 0;
     my $paths := paths();
 
-    if !$paths {
+    if pir::isnull($paths) {
         # Done processing.
         ok(@results[0][0] eq "la" &&  @results[0][1] == 1 && @results[0][2] == 2, "exhaustive-blob(), @results[0]");
         ok(@results[1][0] eq "ny" &&  @results[1][1] == 1 && @results[1][2] == 1, "exhaustive-blob(), @results[1]");
         ok(@results[2][0] eq "bos" && @results[2][1] == 2 && @results[2][2] == 2, "exhaustive-blob(), @results[2]");
-        ok($pings == 12, "exhaustive-blob(), number of values checked");
+        ok($pings == 12, "exhaustive-blob(), number of values checked ($pings/12)");
 
         return 1;
     }
 
-    my $city := choose($paths, "la", "ny", "bos");
-    my $store := choose($paths, 1, 2);
-    my $box := choose($paths, 1, 2);
+    my $city;
+    my $store;
+    my $box;
+    Q:PIR {
+        $P0 = find_lex '$paths'
+        ($P1, $P0) = 'choose'($P0, 'la', 'ny', 'bos')
+        ($P2, $P0) = 'choose'($P0, 1, 2)
+        ($P3, $P0) = 'choose'($P0, 1, 2)
+
+        store_lex '$paths', $P0
+        store_lex '$city', $P1
+        store_lex '$store', $P2
+        store_lex '$box', $P3
+    };
 
     $pings++;
 
@@ -251,26 +269,37 @@ sub cut_blob() {
     my $pings := 0;
     my $paths := paths();
 
-    if !$paths {
+    if pir::isnull($paths) {
         # Done processing.
         ok(@results[0][0] eq "la" &&  @results[0][1] == 1 && @results[0][2] == 2, "cut-blob(), @results[0]");
         ok(@results[1][0] eq "ny" &&  @results[1][1] == 1 && @results[1][2] == 1, "cut-blob(), @results[1]");
         ok(@results[2][0] eq "bos" && @results[2][1] == 2 && @results[2][2] == 2, "cut-blob(), @results[2]");
-        ok($pings == 7, "cut-blob(), number of values checked");
+        ok($pings == 7, "cut-blob(), number of values checked ($pings/7)");
 
         return 1;
     }
 
-    my $city := choose($paths, "la", "ny", "bos");
-    mark($paths);
-    my $store := choose($paths, 1, 2);
-    my $box := choose($paths, 1, 2);
+    my $city;
+    my $store;
+    my $box;
+    Q:PIR {
+        $P0 = find_lex '$paths'
+        ($P1, $P0) = 'choose'($P0, 'la', 'ny', 'bos')
+        $P0 = 'mark'($P0)
+        ($P2, $P0) = 'choose'($P0, 1, 2)
+        ($P3, $P0) = 'choose'($P0, 1, 2)
+
+        store_lex '$paths', $P0
+        store_lex '$city', $P1
+        store_lex '$store', $P2
+        store_lex '$box', $P3
+    };
 
     $pings++;
 
     if coin($city, $store, $box) {
         @results.push: [$city, $store, $box];
-        cut($paths);
+        $paths := cut($paths);
     }
 
     fail($paths);

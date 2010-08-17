@@ -391,14 +391,19 @@ sub unify($paths, $x, $y) {
             unify($paths, $var.value, $term);
         }
         else {
-            # The binding of a Variable has to be undone on backtracking.
-            if choicepoint($paths) {
-                $var.unbind;
-                fail($paths);
-            }
-            else {
-                $var.bind($term);
-            }
+            # When backtracking, variable bindings have to be undone. Instead
+            # of having unify() return a new backtracking stack, we just
+            # stealthily change the failure callback to unbind first.
+            my $cc := Q:PIR {
+                $P0 = find_lex '$paths'
+                %r = getattribute $P0, 'car'
+            };
+            my $cb := sub () { $var.unbind; $cc(); }
+            Q:PIR {
+                $P1 = find_lex '$cb'
+                setattribute $P0, 'car', $P1
+            };
+            $var.bind($term);
         }
     }
     elsif $x ~~ Variable && $y ~~ Variable {
@@ -413,14 +418,19 @@ sub unify($paths, $x, $y) {
                 $y := $tmp;
             }
 
-            # The binding of a Variable has to be undone on backtracking.
-            if choicepoint($paths) {
-                $x.unbind;
-                fail($paths);
-            }
-            else {
-                $x.bind($y);
-            }
+            # When backtracking, variable bindings have to be undone. Instead
+            # of having unify() return a new backtracking stack, we just
+            # stealthily change the failure callback to unbind first.
+            my $cc := Q:PIR {
+                $P0 = find_lex '$paths'
+                %r = getattribute $P0, 'car'
+            };
+            my $cb := sub () { $x.unbind; $cc(); }
+            Q:PIR {
+                $P1 = find_lex '$cb'
+                setattribute $P0, 'car', $P1
+            };
+            $x.bind($y);
         }
     }
     elsif $x ~~ Int && $y ~~ Int {

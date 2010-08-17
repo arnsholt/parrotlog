@@ -36,10 +36,15 @@
     parrotns = get_root_namespace ['parrot']
     imports = split ' ', 'PAST PCT HLL Regex Hash'
     parrotns.'export_to'(hllns, imports)
+
+    $P0 = newclass 'Cons'
+    addattribute $P0, 'car'
+    addattribute $P0, 'cdr'
 .end
 
 # Non-deterministic search. Choose an element from a list of options, with the
 # option to backtrack if it turns out it was an invalid value.
+# XXX: This should be moved to Coretest, as it's only used there.
 .sub 'choose'
     .param pmc paths
     .param pmc options :slurpy
@@ -52,10 +57,11 @@
   got_options:
     chosen = shift options
 
-    $I0 = 'choicepoint'(paths)
+    $P0 = 'choicepoint'(paths)
+    $I0 = isnull $P0
     if $I0 goto recurse
 
-    .return (chosen)
+    .return (chosen, $P0)
 
   recurse:
     .tailcall 'choose'(paths, options :flat)
@@ -66,13 +72,15 @@
 .sub 'fail'
     .param pmc paths
     .local pmc cc
+    .local pmc rest
 
-    cc = pop paths
+    cc = getattribute paths, 'car'
+    rest = getattribute paths, 'cdr'
 
     # Parrot continuations don't take arguments, but fail (which serves as the
     # mark) -does-, so we have to supply the argument in order to not fail
     # when backtracking over the mark.
-    .tailcall cc(paths)
+    .tailcall cc(rest)
 .end
 
 # Create a new stack to backtrack over. This makes which continuations belong
@@ -81,14 +89,15 @@
     .local pmc cc
     .local pmc stack
 
-    stack = new 'ResizablePMCArray'
-    $I0 = 'choicepoint'(stack)
+    stack = 'choicepoint'(stack)
+    $I0 = isnull stack
     if $I0 goto final_failure
 
     .return (stack)
 
   final_failure:
-    .return ()
+    null $P0
+    .return ($P0)
 .end
 
 # Store a choicepoint on the stack. Returns 0 on initial call, 1 when
@@ -99,26 +108,35 @@
 
     cc = new 'Continuation'
     set_addr cc, failure
-    push paths, cc
+    $P0 = new 'Cons'
+    setattribute $P0, 'car', cc
+    setattribute $P0, 'cdr', paths
 
-    .return (0)
+    .return ($P0)
   failure:
-    .return (1)
+    null $P0
+    .return ($P0)
 .end
 
 # Set the mark up to which cut() should prune. We use the sub ref to fail() as
 # the mark, so that fail doesn't have to be modified. Whenever fail() happens
 # upon a mark, it will simply result in a recursive call to itself, which will
 # call the next continuation on the stack.
+# XXX: This should be moved to Coretest, as it's only used there.
 .sub 'mark'
     .param pmc paths
     .local pmc fail_cc
 
     fail_cc = get_global 'fail'
-    push paths, fail_cc
+    $P0 = new 'Cons'
+    setattribute $P0, 'car', fail_cc
+    setattribute $P0, 'cdr', paths
+
+    .return ($P0)
 .end
 
 # Prune the search tree up to the mark.
+# XXX: This should be moved to Coretest, as it's only used there.
 .sub 'cut'
     .param pmc paths
     .local pmc cc
@@ -128,9 +146,12 @@
 
   # Pop elements off the stack until we find a mark.
   loop:
-    cc = pop paths
+    cc = getattribute paths, 'car'
+    paths = getattribute paths, 'cdr'
     $I0 = issame cc, fail_cc
     unless $I0 goto loop
+
+    .return (paths)
 .end
 
 .include 'src/gen/parrotlog-grammar.pir'
