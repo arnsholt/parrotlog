@@ -1,6 +1,6 @@
 main :- write('1..2'), nl,
         first,
-        (second ; true), write('ok 2 - cut eliminates whole call chain #TODO: BUG'), nl.
+        (second ; true), write('ok 2 - cut eliminates whole call chain'), nl.
 
 first :- fail; write('ok 1 - backtracks on fail/0'), nl.
 
