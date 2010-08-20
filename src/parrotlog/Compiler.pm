@@ -132,13 +132,27 @@ sub compile_body($ast, $origpaths, %vars) {
         # Section 7.8.8, ';'/2 - if-then-else.
         elsif $arity == 2 && $functor eq ';' {
             # TODO: ;/2 with ->/2 as first argument (7.8.8).
-            return choicepoint(
-                compile_body($ast.args[0], $origpaths, %vars),
-                compile_body($ast.args[1], $origpaths, %vars));
+            my $arg0 := $ast.args[0];
+            if $arg0 ~~ Term && $arg0.arity == 2 && $arg0.functor eq '->' {
+                pir::die("If-then-else not implemented yet");
+            }
+            else {
+                return choicepoint(
+                    compile_body($ast.args[0], $origpaths, %vars),
+                    compile_body($ast.args[1], $origpaths, %vars));
+            }
         }
         # Section 7.8.7, '->'/2 - if-then.
         elsif $arity == 2 && $functor eq '->' {
-            pir::die('->/2 not implemented yet');
+            my $block := PAST::Block.new(:blocktype<declaration>);
+            $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
+            $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
+                :viviself($origpaths));
+            $block.push: compile_body($ast.args[0], $origpaths, %vars);
+
+            return PAST::Stmts.new(
+                PAST::Op.new(:pasttype<call>, $block, $origpaths),
+                compile_body($ast.args[1], $origpaths, %vars));
         }
         # Section 7.8.4, !/0 - cut.
         elsif $arity == 0 && $functor eq '!' {
