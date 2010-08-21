@@ -32,7 +32,7 @@ arity. foo cannot be a built-in or a control construct.
 method directive($/) {
     my $directive := $<directive>.ast.args[0];
     if $directive.functor eq 'op' && $directive.arity == 3 {
-        self.insert_op(|$directive.args);
+        self.insert_op($/, |$directive.args);
     }
     elsif $directive.functor eq 'dynamic' && $directive.arity == 1 {
         # dynamic/1 can be safely ignored for now, I think.
@@ -48,7 +48,7 @@ method directive($/) {
 method clause($/) { make $<clause>.ast }
 
 # Section 7.4.2.4, directive op/3
-method insert_op($priority, $specifier, $operator) {
+method insert_op($/, $priority, $specifier, $operator) {
     # XXX: Check constraints on input arguments!
     $specifier := $specifier.functor;
     $priority := $priority.value;
