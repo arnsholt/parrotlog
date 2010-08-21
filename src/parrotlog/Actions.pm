@@ -41,7 +41,7 @@ method directive($/) {
         Coretest::coretest();
     }
     else {
-        pir::die("Unknown directive {$directive.functor}/{$directive.arity}");
+        $/.CURSOR.panic("Unknown directive {$directive.functor}/{$directive.arity}");
     }
 }
 
@@ -62,29 +62,29 @@ There shall not be two operators with the same class and name.
 There shall not be an infix and a prefix operator with the same name.
 =end spec
     if $specifier eq 'fx' || $specifier eq 'fy' {
-        pir::die("Redefinition of operator $operator")
+        $/.CURSOR.panic("Redefinition of prefix operator $operator")
             if %Parrotlog::Grammar::prefix{$operator};
 
         %Parrotlog::Grammar::prefix{$operator} := $spec;
     }
     elsif $specifier eq 'xfx' || $specifier eq 'xfy' || $specifier eq 'yfx' {
-        pir::die("Redefinition of operator $operator")
+        $/.CURSOR.panic("Redefinition of infix operator $operator")
             if %Parrotlog::Grammar::infix{$operator};
-        pir::die("Cannot create infix $operator when postfix already exists")
+        $/.CURSOR.panic("Cannot create infix $operator when postfix already exists")
             if %Parrotlog::Grammar::postfix{$operator};
 
         %Parrotlog::Grammar::infix{$operator} := $spec;
     }
     elsif $specifier eq 'xf' || $specifier eq 'yf' {
-        pir::die("Redefinition of operator $operator")
+        $/.CURSOR.panic("Redefinition of postfix operator $operator")
             if %Parrotlog::Grammar::postfix{$operator};
-        pir::die("Cannot create postfix $operator when infix already exists")
+        $/.CURSOR.panic("Cannot create postfix $operator when infix already exists")
             if %Parrotlog::Grammar::infix{$operator};
 
         %Parrotlog::Grammar::postfix{$operator} := $spec;
     }
     else {
-        pir::die("Bad operator specifier: $specifier");
+        $/.CURSOR.panic("Bad operator specifier: $specifier");
     }
 }
 
