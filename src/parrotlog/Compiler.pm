@@ -11,6 +11,11 @@ method past($source, *%adverbs) {
     # Main driver code. On program start, set up backtracking stack and call
     # main/0.
     my $past := PAST::Block.new(:hll<parrotlog>, :blocktype<immediate>);
+
+    $past.push: PAST::Var.new(:name<termclass>, :scope<lexical>, :isdecl,
+        :viviself(PAST::Op.new(:inline("    %r = get_root_global ['_parrotlog'], 'Term'"))));
+    our $termclass := PAST::Var.new(:name<termclass>, :scope<lexical>);
+
     $past.push: PAST::Var.new(:scope<register>, :name<paths>, :isdecl,
         :viviself(call_internal('paths')));
     my $paths := PAST::Var.new(:scope<register>, :name<paths>);
@@ -170,7 +175,12 @@ sub compile_body($ast, $origpaths, %vars) {
         }
         # Section 7.8.3, call/1.
         elsif $arity == 1 && $functor eq 'call' {
-            pir::die('call/1 not implemented yet');
+            if $ast.args[0] ~~ Term {
+                return compile_body($ast.args[0], $origpaths, %vars);
+            }
+            else {
+                pir::die('call/1 on variables not implemented yet');
+            }
         }
         # Section 7.8.1, true/0.
         elsif $arity == 0 && $functor eq 'true' {
@@ -182,17 +192,100 @@ sub compile_body($ast, $origpaths, %vars) {
         }
         # Section 7.8.9 - catch/3.
         elsif $arity == 3 && $functor eq 'catch' {
-            pir::die('catch/3 not implemented yet');
-            # Given catch(Goal, Catcher, Recovery):
-            # 1) push_eh
-            # 2) call(Goal)
-            # 3a) If the call is successful, true
-            # 3b) If an error is thrown unify payload of exception with
-            # Catcher then execute Recovery.
+            # XXX: The Goal and Recovery might constitute their own cut
+            # domains. If that's so, the Stmts nodes have to be changed to
+            # Blocks with their own paths lexicals.
+            # First, compile the arguments to catch/3 into the correct forms.
+            my $goal := compile_body(
+                Term.from_data('call', $ast.args[0]),
+                $origpaths,
+                %vars);
+            my $catcher := $ast.args[1].past;
+            my $recovery := compile_body(
+                Term.from_data('call', $ast.args[2]),
+                $origpaths, %vars);
+
+            # Some bookkeeping variables we'll be needing.
+            my $ex := PAST::Var.new(:name<ex>, :scope<lexical>);
+            my $ex_obj := PAST::Var.new(:name<ex_obj>, :scope<lexical>);
+            my $unified := PAST::Var.new(:name<unified>, :scope<register>);
+            my $popeh := PAST::Var.new(:name<popeh>, :scope<register>);
+
+            # If the payload of the Exception is a Prolog term, we do this:
+            my $is_term := choicepoint(
+                PAST::Stmts.new(
+                    # Try to unify the Ball thrown with the Catcher...
+                    procedure_call('=/2',
+                        $paths,
+                        $catcher,
+                        $ex),
+                    # If we come this far, the Ball is subsumed by Catcher,
+                    # and we want to fail/0 on backtracking, instead of
+                    # rethrowing the exception. Make sure we remember that.
+                    PAST::Op.new(:pasttype<bind>,
+                        $unified,
+                        PAST::Val.new(:value(1))),
+                    # Do the exception handling.
+                    $recovery,
+                    # If we come this far, we don't have to pop the exception
+                    # handler on backtracking, since that's the next thing
+                    # done. Make sure we remember that.
+                    PAST::Op.new(:pasttype<bind>,
+                        $popeh,
+                        PAST::Val.new(:value(1)))),
+                PAST::Stmts.new(
+                    # Pop the exception handler, if needed.
+                    PAST::Op.new(:pasttype<if>,
+                        PAST::Op.new(:pirop<isnull>,
+                            $popeh),
+                        PAST::Op.new(:pirop<pop_eh>)),
+                    PAST::Op.new(:pasttype<unless>,
+                        PAST::Op.new(:pirop<isnull>,
+                            $unified),
+                        # Unification succeeded: backtrack
+                        call_internal('fail', $origpaths),
+                        # Unification failed: rethrow exception
+                        PAST::Op.new(:pirop<rethrow__vP>,
+                            $ex_obj))));
+
+            # If the payload isn't a term, we just pop the exception handler
+            # and rethrow.
+            my $not_term := PAST::Stmts.new(
+                PAST::Op.new(:pirop<pop_eh>),
+                PAST::Op.new(:pirop<rethrow__vP>,
+                    $ex_obj));
+
+            our $termclass;
+            my $handler := PAST::Stmts.new(
+                # Stuff the exception object and payload into the right
+                # variables.
+                PAST::Var.new(:name<ex_obj>, :scope<lexical>, :isdecl, :viviself(
+                    PAST::Op.new(:inline('    .get_results(%r)')))),
+                PAST::Var.new(:name<ex>, :scope<lexical>, :isdecl, :viviself(
+                    PAST::Var.new(:scope<keyed>,
+                        $ex_obj,
+                        PAST::Val.new(:value<payload>)))),
+                # Declare our bookkeeping variables.
+                PAST::Var.new(:name<unified>, :scope<register>, :isdecl),
+                PAST::Var.new(:name<popeh>, :scope<register>, :isdecl),
+                # Do the right thing depending on the type of the payload.
+                PAST::Op.new(:pasttype<if>,
+                    PAST::Op.new(:pasttype<callmethod>, :name<ACCEPTS>,
+                        $termclass,
+                        $ex),
+                    $is_term,
+                    $not_term));
+
+            # Return the whole shebang wrapped in an exception handler.
+            return PAST::Op.new(:pasttype<try>,
+                $goal,
+                $handler);
         }
         # Section 7.8.10 - throw/1.
         elsif $arity == 1 && $functor eq 'throw' {
-            pir::die('throw/1 not implemented yet');
+            return PAST::Op.new(:inline('    throw %0'), 
+                PAST::Op.new(:inline("    %r = new 'Exception'\n    %r['payload'] = %0"),
+                    $ast.args[0].past));
         }
         else {
             my $name := $ast.functor ~ '/' ~ $ast.arity;
