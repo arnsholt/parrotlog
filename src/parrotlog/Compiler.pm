@@ -142,6 +142,11 @@ sub compile_body($ast, $origpaths, %vars) {
                 pir::die("If-then-else not implemented yet");
             }
             else {
+                # We wrap disjunctions in their own Block with its own
+                # origpaths parameter so that we can reset paths to the
+                # correct value when backtracking. We do not declare a new
+                # paths lexical, however, since we want cuts to affect the
+                # whole predicate, not just the disjunction.
                 my $block := PAST::Block.new(:blocktype<declaration>);
                 $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
 
@@ -157,6 +162,9 @@ sub compile_body($ast, $origpaths, %vars) {
         }
         # Section 7.8.7, '->'/2 - if-then.
         elsif $arity == 2 && $functor eq '->' {
+            # We wrap the antecedent of the implication in a Block with a new
+            # paths lexical so that cuts don't affect the rest of the
+            # predicate.
             my $block := PAST::Block.new(:blocktype<declaration>);
             $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
             $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
