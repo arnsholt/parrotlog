@@ -137,9 +137,17 @@ sub compile_body($ast, $origpaths, %vars) {
                 pir::die("If-then-else not implemented yet");
             }
             else {
-                return choicepoint(
+                my $block := PAST::Block.new(:blocktype<declaration>);
+                $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
+
+                $block.push: choicepoint(
                     compile_body($ast.args[0], $origpaths, %vars),
-                    compile_body($ast.args[1], $origpaths, %vars));
+                    PAST::Stmts.new(
+                        PAST::Op.new(:pasttype<bind>,
+                            $paths, $origpaths),
+                        compile_body($ast.args[1], $origpaths, %vars)));
+
+                return PAST::Op.new(:pasttype<call>, $block, $paths);
             }
         }
         # Section 7.8.7, '->'/2 - if-then.
