@@ -106,7 +106,13 @@ class Variable is PrologTerm {
 
     method output() {
         # XXX: This can probably be improved.
-        return $!name ?? $!name !! '_';
+        #return $!name ?? $!name !! '_';
+        if self.bound {
+            return $!value.output;
+        }
+        else {
+            return $!name ?? $!name !! '_';
+        }
     }
 
     method past() {
