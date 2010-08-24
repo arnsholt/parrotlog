@@ -86,7 +86,7 @@ sub compile_clause($clause, @args) {
         $head := $clause;
     }
 
-    my $past := PAST::Stmts.new;
+    my $past := PAST::Block.new(:blocktype<immediate>);
 
     my %vars;
     for $clause.variable_set.contents -> $var {
