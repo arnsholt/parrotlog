@@ -42,6 +42,31 @@
     addattribute $P0, 'cdr'
 .end
 
+.sub 'call'
+    .param pmc origpaths
+    .param pmc var
+
+    $I0 = var.'bound'()
+    if $I0, bound
+    # TODO: Make this throw an Exception with a Term payload.
+    die 'call/1: variable not bound'
+  bound:
+    var = var.'value'()
+
+    .local string functor
+    .local string arity
+    .local pmc args
+
+    functor = var.'functor'()
+    arity = var.'arity'()
+    args = var.'args'()
+
+    $S0 = functor . "/"
+    $S0 = $S0 . arity
+    $P0 = get_root_global ['parrotlog'], $S0
+    $P0(origpaths, args :flat)
+.end
+
 # Non-deterministic search. Choose an element from a list of options, with the
 # option to backtrack if it turns out it was an invalid value.
 # XXX: This should be moved to Coretest, as it's only used there.

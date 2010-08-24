@@ -187,7 +187,7 @@ sub compile_body($ast, $origpaths, %vars) {
                 return compile_body($ast.args[0], $origpaths, %vars);
             }
             else {
-                pir::die('call/1 on variables not implemented yet');
+                return call_internal('call', $origpaths, $ast.args[0].past);
             }
         }
         # Section 7.8.1, true/0.
