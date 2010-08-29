@@ -34,7 +34,7 @@ class Variable is PrologTerm {
     has $!name;
 
     method value() {
-        if $!value ~~ Variable || $!value ~~ Term {
+        if $!value ~~ Variable {
             return $!value.value;
         }
         else {
@@ -57,32 +57,33 @@ class Variable is PrologTerm {
     }
 
     method bind($other) {
-        if $!value ~~ Term {
-            pir::die("Attempted to bind bound Variable");
-        }
-        elsif $!value ~~ Variable {
+        if $!value ~~ Variable {
             $!value.bind($other);
+        }
+        elsif $!value ~~ PrologTerm {
+            pir::die("Attempted to bind bound Variable");
         }
         else {
             #if $other ~~ Variable
-            if $other ~~ Term {
-                $!value := $other;
-            }
-            elsif $other ~~ Variable {
+            if $other ~~ Variable {
                 # Make sure $other isn't bound to self.
                 return 0 if $other.references(self);
                 $!value := $other;
             }
+            elsif $other ~~ PrologTerm {
+                $!value := $other;
+            }
             else {
-                pir::die("Attempted to bind Variable to non-Variable, non-Term");
+                my $class := pir::class__PP($other);
+                pir::die("Can't bind object of class $class");
             }
         }
     }
 
     method bound() {
-        if    $!value ~~ Term     { return 1;}
-        elsif $!value ~~ Variable { return $!value.bound; }
-        else                      { return 0; }
+        if    $!value ~~ Variable   { return $!value.bound; }
+        elsif $!value ~~ PrologTerm { return 1;}
+        else                        { return 0; }
     }
 
     method unbind() {
@@ -469,17 +470,3 @@ sub handle_directive($ast) {
     pir::die("Unknown directive {$ast.functor}") if !%directives{$ast.functor};
     %directives{$ast.functor}(|$ast.args);
 }
-
-sub dynamic($predicate) {}
-sub multifile($predicate) {}
-sub discontiguous($predicate) {}
-
-sub op($priority, $spec, $operator) {
-    pir::say("Defining operator {$priority.functor}, {$spec.functor}, {$operator.functor}");
-    # TODO: Essentially, create a rule *fix:sym<$operator> { <sym> <O("$spec $priority")> }
-}
-
-sub char_conversion($in, $out) {}
-sub initialization($predicate) {}
-sub include($file) {}
-sub ensure_loaded($file) {}

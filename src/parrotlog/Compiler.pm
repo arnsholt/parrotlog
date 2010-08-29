@@ -172,7 +172,7 @@ sub compile_body($ast, $origpaths, %vars) {
             $block.push: compile_body($ast.args[0], $origpaths, %vars);
 
             return PAST::Stmts.new(
-                PAST::Op.new(:pasttype<call>, $block, $origpaths),
+                PAST::Op.new(:pasttype<call>, $block, $paths),
                 compile_body($ast.args[1], $origpaths, %vars));
         }
         # Section 7.8.4, !/0 - cut.
