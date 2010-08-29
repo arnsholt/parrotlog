@@ -43,7 +43,8 @@ INIT {
     # XXX: \+/1 isn't defined in the draft I have, only in the final standard,
     # so this is currently a bit sketchy.
     %prefix<\\+> := 'fy 900';
-    %prefix<->   := 'fy 200';
+    # Prefix -/1 gets special treatment so that -3 is parsed correctly.
+    #%prefix<->   := 'fy 200';
     %prefix<\\>  := 'fy 200';
 
     %infix<:->    := 'xfx 1200';
@@ -68,7 +69,7 @@ INIT {
     %infix{'>'}   := 'xfx  700';
     %infix{'>='}  := 'xfx  700';
     %infix<+>     := 'yfx  500';
-    %infix<->     := 'yfx  500'; # XXX: Needs to check that following term is not an integer
+    %infix<->     := 'yfx  500';
     %infix</\\>   := 'yfx  500';
     %infix<\\/>   := 'yfx  500';
     %infix<*>     := 'yfx  400';
@@ -194,6 +195,7 @@ token quote_escape:sym<meta> { \\ $<meta>=<[\\'"`]> }
 token quote_escape:sym<oct> { \\ <octint> \\ }
 token quote_escape:sym<hex> { \\ x <hexint> \\ }
 
+token nonnumeric { <!before [<integer> | <float>]> }
 # Section 6.4.4, integer numbers
 proto token integer { <...> }
 # A bit of a hack to prevent "1.3." from being read as two integers rather
@@ -238,6 +240,15 @@ token prefix:sym<prolog> {
     <.ws> <op=.name>
     <?{ %prefix{$<op>.ast} }>
     <O(%prefix{$<op>.ast})>
+}
+
+token prefix:sym<neg> {
+    # For some absurd reason, this doesn't work:
+    # <.ws> $<op>=['-']
+    <.ws> <op=.name>
+    <?{ $<op>.ast eq '-' }>
+    <!before <integer> | <float>>
+    <O('fy 200')>
 }
 
 token postfix:sym<prolog> {

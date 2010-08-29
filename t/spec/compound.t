@@ -12,7 +12,7 @@ test1 :- compound(33.3), write('not ok 1'), nl.
 test1 :- write('ok 1'), nl.
 
 % [compound(-33.3), failure].
-test2 :- compound(-33.3), write('not ok 2 # TODO bug'), nl.
+test2 :- compound(-33.3), write('not ok 2'), nl.
 test2 :- write('ok 2'), nl.
 
 % [compound(-a), success].
