@@ -85,6 +85,27 @@
     $P0(paths)
 .end
 
+.sub 'float/1'
+    .param pmc paths
+    .param pmc var
+
+    $P0 = get_root_global ['_parrotlog'], 'Variable'
+    $I0 = $P0.'ACCEPTS'(var)
+    unless $I0, nonvar
+    $I0 = var.'bound'()
+    unless $I0, fail
+    var = var.'value'()
+
+  nonvar:
+    $P0 = get_root_global ['_parrotlog'], 'Float'
+    $I0 = $P0.'ACCEPTS'(var)
+    unless $I0, fail
+    .return ()
+  fail:
+    $P0 = get_root_global ['_parrotlog'], 'fail'
+    $P0(paths)
+.end
+
 .HLL '_parrotlog'
 
 .namespace []
