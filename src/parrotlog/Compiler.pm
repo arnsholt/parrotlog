@@ -184,7 +184,13 @@ sub compile_body($ast, $origpaths, %vars) {
         # Section 7.8.3, call/1.
         elsif $arity == 1 && $functor eq 'call' {
             if $ast.args[0] ~~ Term {
-                return compile_body($ast.args[0], $origpaths, %vars);
+                return PAST::Op.new(:pasttype<call>,
+                    PAST::Block.new(:blocktype<declaration>,
+                        PAST::Var.new(:name<origpaths>, :scope<parameter>),
+                        PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
+                            :viviself($origpaths)),
+                        compile_body($ast.args[0], $origpaths, %vars)),
+                    $paths);
             }
             else {
                 return call_internal('call', $origpaths, $ast.args[0].past);
