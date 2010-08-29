@@ -170,7 +170,7 @@ proto token comment { <...> }
 token comment:sym<line> { '%' \N* \n  }
 token comment:sym<bracketed> {
     '/*'
-    [ <-[/]> | <!after '*' > '/' ] *
+    [ <-[*]> | '*' <!before '/'> ] *
     '*/'
 }
 
