@@ -88,8 +88,23 @@ There shall not be an infix and a prefix operator with the same name.
     }
 }
 
-method term:sym<integer>($/) { make $<integer>.ast }
-method term:sym<float>($/) { make $<float>.ast }
+method term:sym<integer>($/) {
+    my $ast := $<integer>.ast;
+    if $<neg> {
+        $ast.value(-$ast.value);
+    }
+
+    make $ast;
+}
+
+method term:sym<float>($/) {
+    my $ast := $<float>.ast;
+    if $<neg> {
+        $ast.value(-$ast.value);
+    }
+
+    make $ast;
+}
 
 method term:sym<atom>($/) { make Term.from_data($<atom>.ast) }
 
