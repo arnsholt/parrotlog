@@ -1,9 +1,13 @@
 class Parrotlog::Compiler is HLL::Compiler;
 
+our $origpaths;
+
 INIT {
     Parrotlog::Compiler.language('Parrotlog');
     Parrotlog::Compiler.parsegrammar(Parrotlog::Grammar);
     Parrotlog::Compiler.parseactions(Parrotlog::Actions);
+
+    $origpaths := PAST::Var.new(:name<origpaths>, :scope<lexical>);
 }
 
 method past($source, *%adverbs) {
@@ -106,20 +110,20 @@ sub compile_clause($clause, @args) {
         $i++;
     }
 
-    $past.push: compile_body($body, @args[0], %vars)
+    $past.push: compile_body($body)
         if pir::defined($body);
 
     return $past;
 }
 
 # Section 7.6.2, converting a term to the body of a clause.
-sub compile_body($ast, $origpaths, %vars) {
+sub compile_body($ast) {
     my $class := pir::class__PP($ast).name;
     my $paths := PAST::Var.new(:name<paths>, :scope<lexical>);
 
     if $class eq 'Variable' {
         # A goal X is equivalent to call(X).
-        return compile_body(Term.from_data('call', $ast), $origpaths, %vars);
+        return compile_body(Term.from_data('call', $ast));
     }
     elsif $class eq 'Term' {
         my $functor := $ast.functor;
@@ -130,8 +134,8 @@ sub compile_body($ast, $origpaths, %vars) {
         # Section 7.8.5, ','/2 - conjunction.
         if $arity == 2 && $functor eq ',' {
            return PAST::Stmts.new(
-                compile_body($ast.args[0], $origpaths, %vars),
-                compile_body($ast.args[1], $origpaths, %vars));
+                compile_body($ast.args[0]),
+                compile_body($ast.args[1]));
         }
         # Section 7.8.6, ';' - disjunction.
         # Section 7.8.8, ';'/2 - if-then-else.
@@ -151,11 +155,11 @@ sub compile_body($ast, $origpaths, %vars) {
                 $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
 
                 $block.push: choicepoint(
-                    compile_body($ast.args[0], $origpaths, %vars),
+                    compile_body($ast.args[0]),
                     PAST::Stmts.new(
                         PAST::Op.new(:pasttype<bind>,
                             $paths, $origpaths),
-                        compile_body($ast.args[1], $origpaths, %vars)));
+                        compile_body($ast.args[1])));
 
                 return PAST::Op.new(:pasttype<call>, $block, $paths);
             }
@@ -169,11 +173,11 @@ sub compile_body($ast, $origpaths, %vars) {
             $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
             $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
                 :viviself($origpaths));
-            $block.push: compile_body($ast.args[0], $origpaths, %vars);
+            $block.push: compile_body($ast.args[0]);
 
             return PAST::Stmts.new(
                 PAST::Op.new(:pasttype<call>, $block, $paths),
-                compile_body($ast.args[1], $origpaths, %vars));
+                compile_body($ast.args[1]));
         }
         # Section 7.8.4, !/0 - cut.
         elsif $arity == 0 && $functor eq '!' {
@@ -189,7 +193,7 @@ sub compile_body($ast, $origpaths, %vars) {
                         PAST::Var.new(:name<origpaths>, :scope<parameter>),
                         PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
                             :viviself($origpaths)),
-                        compile_body($ast.args[0], $origpaths, %vars)),
+                        compile_body($ast.args[0])),
                     $paths);
             }
             else {
@@ -211,13 +215,10 @@ sub compile_body($ast, $origpaths, %vars) {
             # Blocks with their own paths lexicals.
             # First, compile the arguments to catch/3 into the correct forms.
             my $goal := compile_body(
-                Term.from_data('call', $ast.args[0]),
-                $origpaths,
-                %vars);
+                Term.from_data('call', $ast.args[0]));
             my $catcher := $ast.args[1].past;
             my $recovery := compile_body(
-                Term.from_data('call', $ast.args[2]),
-                $origpaths, %vars);
+                Term.from_data('call', $ast.args[2]));
 
             # Some bookkeeping variables we'll be needing.
             my $ex := PAST::Var.new(:name<ex>, :scope<lexical>);
