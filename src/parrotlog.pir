@@ -151,8 +151,14 @@
 
     $I0 = var.'bound'()
     if $I0, bound
-    # TODO: Make this throw an Exception with a Term payload.
-    die 'call/1: variable not bound'
+
+    $P0 = get_root_global ['_parrotlog'], 'Term'
+    $P1 = $P0.'from_data'('instantiation_error')
+    $P1 = $P0.'from_data'('error', $P1, $P1)
+    $P2 = new 'Exception'
+    $P2['payload'] = $P1
+    throw $P2
+
   bound:
     var = var.'value'()
 
