@@ -114,6 +114,7 @@ sub compile_clause($clause, @args) {
 
     $past.push: compile_body($body)
         if pir::defined($body);
+    $past.push: $paths;
 
     return $past;
 }
@@ -162,6 +163,8 @@ sub compile_body($ast) {
                             $paths, $origpaths),
                         compile_body($ast.args[1])));
 
+                $block.push: $paths;
+
                 return PAST::Op.new(:pasttype<call>, $block, $paths);
             }
         }
@@ -175,6 +178,9 @@ sub compile_body($ast) {
             $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
                 :viviself($origpaths));
             $block.push: compile_body($ast.args[0]);
+            # On backtracking, we should -not- backtrack into the antecedent
+            # of ->/2.
+            $block.push: $origpaths;
 
             return PAST::Stmts.new(
                 PAST::Op.new(:pasttype<call>, $block, $paths),
@@ -194,7 +200,8 @@ sub compile_body($ast) {
                         $origdecl,
                         PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
                             :viviself($origpaths)),
-                        compile_body($ast.args[0])),
+                        compile_body($ast.args[0]),
+                        $paths),
                     $paths);
             }
             else {
