@@ -128,3 +128,30 @@
 .end
 
 # Section 8.3.8, number/1
+.sub 'number/1'
+    .param pmc paths
+    .param pmc var
+
+    $P0 = get_root_global ['_parrotlog'], 'Variable'
+    $I0 = $P0.'ACCEPTS'(var)
+    unless $I0, nonvar
+    $I0 = var.'bound'()
+    unless $I0, fail
+    var = var.'value'()
+
+  nonvar:
+    $P0 = get_root_global ['_parrotlog'], 'Int'
+    $I0 = $P0.'ACCEPTS'(var)
+    if $I0, success
+
+    $P0 = get_root_global ['_parrotlog'], 'Float'
+    $I0 = $P0.'ACCEPTS'(var)
+    if $I0, success
+
+  fail:
+    $P0 = get_root_global ['_parrotlog'], 'fail'
+    $P0(paths)
+
+  success:
+    .return (paths)
+.end
