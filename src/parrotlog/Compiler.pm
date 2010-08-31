@@ -50,7 +50,7 @@ sub compile_predicate($predicate, $clauses) {
 
     my @args;
     $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
-    @args.push: PAST::Var.new(:name<origpaths>, :scope<lexical>);
+    @args.push: $origpaths;
     my $i := 0;
     while $i < $arity {
         $i++;
@@ -318,13 +318,11 @@ sub choicepoint($first, $second) {
     return PAST::Stmts.new(
         PAST::Op.new(:pasttype<bind>,
             $paths,
-            call_internal('choicepoint',
-                $paths)),
+            call_internal('choicepoint', $paths)),
         PAST::Op.new(:pasttype<unless>,
-            PAST::Op.new(:pirop<isnull>,
-                $paths),
-                $first,
-                $second)
+            PAST::Op.new(:pirop<isnull>, $paths),
+            $first,
+            $second)
     );
 }
 
