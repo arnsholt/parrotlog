@@ -87,6 +87,34 @@
 .end
 
 # Section 8.3.5, atomic/1
+.sub 'atomic/1'
+    .param pmc paths
+    .param pmc var
+
+    $P0 = get_root_global ['_parrotlog'], 'Variable'
+    $I0 = $P0.'ACCEPTS'(var)
+    unless $I0, nonvar
+    $I0 = var.'bound'()
+    unless $I0, fail
+
+  bound:
+    var = var.'value'()
+  nonvar:
+    $P0 = get_root_global ['_parrotlog'], 'Term'
+    $I0 = $P0.'ACCEPTS'(var)
+    unless $I0, ok
+
+    $I0 = var.'arity'()
+    if $I0 == 0 goto ok
+
+  fail:
+    $P0 = get_root_global ['_parrotlog'], 'fail'
+    $P0(paths)
+
+  ok:
+    .return (paths)
+.end
+
 # Section 8.3.6, compound/1
 .sub 'compound/1'
     .param pmc paths
