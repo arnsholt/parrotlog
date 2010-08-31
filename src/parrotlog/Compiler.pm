@@ -1,6 +1,7 @@
 class Parrotlog::Compiler is HLL::Compiler;
 
 our $origpaths;
+our $paths;
 
 INIT {
     Parrotlog::Compiler.language('Parrotlog');
@@ -8,6 +9,7 @@ INIT {
     Parrotlog::Compiler.parseactions(Parrotlog::Actions);
 
     $origpaths := PAST::Var.new(:name<origpaths>, :scope<lexical>);
+    $paths := PAST::Var.new(:name<paths>, :scope<lexical>);
 }
 
 method past($source, *%adverbs) {
@@ -20,9 +22,8 @@ method past($source, *%adverbs) {
         :viviself(PAST::Op.new(:inline("    %r = get_root_global ['_parrotlog'], 'Term'"))));
     our $termclass := PAST::Var.new(:name<termclass>, :scope<lexical>);
 
-    $past.push: PAST::Var.new(:scope<register>, :name<paths>, :isdecl,
+    $past.push: PAST::Var.new(:scope<lexical>, :name<paths>, :isdecl,
         :viviself(call_internal('paths')));
-    my $paths := PAST::Var.new(:scope<register>, :name<paths>);
 
     # Call main/0 on the initial pass, jump to error condition on backtrack.
     $past.push: PAST::Op.new(:pasttype<unless>,
@@ -58,9 +59,8 @@ sub compile_predicate($predicate, $clauses) {
         @args.push: PAST::Var.new(:name($name), :scope<lexical>);
     }
 
-    $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl);
-    my $paths := PAST::Var.new(:name<paths>, :scope<lexical>);
-    $block.push: PAST::Op.new(:pasttype<bind>, $paths, @args[0]);
+    $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
+        :viviself(@args[0]));
 
     $block.push: compile_clauses($clauses, @args);
 
@@ -104,7 +104,7 @@ sub compile_clause($clause, @args) {
     for $head.args -> $arg {
         $past.push: procedure_call(
             '=/2',
-            PAST::Var.new(:name<paths>, :scope<lexical>),
+            $paths,
             @args[$i+1],
             $head.args[$i].past);
         $i++;
@@ -119,7 +119,6 @@ sub compile_clause($clause, @args) {
 # Section 7.6.2, converting a term to the body of a clause.
 sub compile_body($ast) {
     my $class := pir::class__PP($ast).name;
-    my $paths := PAST::Var.new(:name<paths>, :scope<lexical>);
 
     if $class eq 'Variable' {
         # A goal X is equivalent to call(X).
@@ -318,12 +317,12 @@ sub compile_body($ast) {
 sub choicepoint($first, $second) {
     return PAST::Stmts.new(
         PAST::Op.new(:pasttype<bind>,
-            PAST::Var.new(:name<paths>, :scope<lexical>),
+            $paths,
             call_internal('choicepoint',
-                PAST::Var.new(:name<paths>, :scope<lexical>))),
+                $paths)),
         PAST::Op.new(:pasttype<unless>,
             PAST::Op.new(:pirop<isnull>,
-                PAST::Var.new(:name<paths>, :scope<lexical>)),
+                $paths),
                 $first,
                 $second)
     );
