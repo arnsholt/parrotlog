@@ -112,4 +112,19 @@
 .end
 
 # Section 8.3.7, nonvar/1
+.sub 'nonvar/1'
+    .param pmc paths
+    .param pmc var
+
+    $P0 = get_root_global ['_parrotlog'], 'Variable'
+    $I0 = $P0.'ACCEPTS'(var)
+    unless $I0, ok
+    $I0 = var.'bound'()
+    if $I0, ok
+    $P0 = get_root_global ['_parrotlog'], 'fail'
+    $P0(paths)
+  ok:
+    .return (paths)
+.end
+
 # Section 8.3.8, number/1
