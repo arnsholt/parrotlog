@@ -162,8 +162,8 @@ sub compile_body($ast) {
                         PAST::Op.new(:pasttype<bind>,
                             $paths, $origpaths),
                         compile_body($ast.args[1])));
-
-                $block.push: $paths;
+                # ;/2 blocks don't have to return a new paths value since they
+                # use the outer block's container.
 
                 return PAST::Op.new(:pasttype<call>, $block, $paths);
             }
