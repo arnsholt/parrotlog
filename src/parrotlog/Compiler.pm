@@ -1,6 +1,7 @@
 class Parrotlog::Compiler is HLL::Compiler;
 
 our $origpaths;
+our $origdecl;
 our $paths;
 
 INIT {
@@ -9,6 +10,7 @@ INIT {
     Parrotlog::Compiler.parseactions(Parrotlog::Actions);
 
     $origpaths := PAST::Var.new(:name<origpaths>, :scope<lexical>);
+    $origdecl := PAST::Var.new(:name<origpaths>, :scope<parameter>);
     $paths := PAST::Var.new(:name<paths>, :scope<lexical>);
 }
 
@@ -49,7 +51,7 @@ sub compile_predicate($predicate, $clauses) {
     my $arity := $a_clause.arity;
 
     my @args;
-    $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
+    $block.push: $origdecl;
     @args.push: $origpaths;
     my $i := 0;
     while $i < $arity {
@@ -151,7 +153,7 @@ sub compile_body($ast) {
                 # paths lexical, however, since we want cuts to affect the
                 # whole predicate, not just the disjunction.
                 my $block := PAST::Block.new(:blocktype<declaration>);
-                $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
+                $block.push: $origdecl;
 
                 $block.push: choicepoint(
                     compile_body($ast.args[0]),
@@ -169,7 +171,7 @@ sub compile_body($ast) {
             # paths lexical so that cuts don't affect the rest of the
             # predicate.
             my $block := PAST::Block.new(:blocktype<declaration>);
-            $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
+            $block.push: $origdecl;
             $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
                 :viviself($origpaths));
             $block.push: compile_body($ast.args[0]);
@@ -189,7 +191,7 @@ sub compile_body($ast) {
             if $ast.args[0] ~~ Term {
                 return PAST::Op.new(:pasttype<call>,
                     PAST::Block.new(:blocktype<declaration>,
-                        PAST::Var.new(:name<origpaths>, :scope<parameter>),
+                        $origdecl,
                         PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
                             :viviself($origpaths)),
                         compile_body($ast.args[0])),
