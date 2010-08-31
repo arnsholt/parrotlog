@@ -152,7 +152,9 @@ sub compile_body($ast) {
                 # origpaths parameter so that we can reset paths to the
                 # correct value when backtracking. We do not declare a new
                 # paths lexical, however, since we want cuts to affect the
-                # whole predicate, not just the disjunction.
+                # whole predicate, not just the disjunction. This is also why
+                # disjunction blocks don't have to return a paths value to the
+                # outer block.
                 my $block := PAST::Block.new(:blocktype<declaration>);
                 $block.push: $origdecl;
 
@@ -162,8 +164,6 @@ sub compile_body($ast) {
                         PAST::Op.new(:pasttype<bind>,
                             $paths, $origpaths),
                         compile_body($ast.args[1])));
-                # ;/2 blocks don't have to return a new paths value since they
-                # use the outer block's container.
 
                 return PAST::Op.new(:pasttype<call>, $block, $paths);
             }
@@ -172,15 +172,13 @@ sub compile_body($ast) {
         elsif $arity == 2 && $functor eq '->' {
             # We wrap the antecedent of the implication in a Block with a new
             # paths lexical so that cuts don't affect the rest of the
-            # predicate.
+            # predicate. Also, we discard choicepoints from inside the
+            # antecedent by not returning the paths value at the end.
             my $block := PAST::Block.new(:blocktype<declaration>);
             $block.push: $origdecl;
             $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
                 :viviself($origpaths));
             $block.push: compile_body($ast.args[0]);
-            # On backtracking, we should -not- backtrack into the antecedent
-            # of ->/2.
-            $block.push: $origpaths;
 
             return PAST::Stmts.new(
                 PAST::Op.new(:pasttype<call>, $block, $paths),
