@@ -30,6 +30,25 @@
     .return (paths)
 .end
 
+.sub '\=/2'
+    .param pmc paths
+    .param pmc lhs
+    .param pmc rhs
+
+    $P0 = get_root_global ['_parrotlog'], 'choicepoint'
+    $P0 = $P0(paths)
+    $I0 = isnull $P0
+    if $I0, failure
+
+    $P1 = get_root_global ['_parrotlog'], 'unify'
+    $P2 = get_root_global ['_parrotlog'], 'fail'
+    $P1($P0, lhs, rhs)
+    $P2(paths)
+
+  failure:
+    .return (paths)
+.end
+
 .sub 'var/1'
     .param pmc paths
     .param pmc var
