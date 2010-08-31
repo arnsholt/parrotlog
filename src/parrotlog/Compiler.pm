@@ -358,5 +358,7 @@ sub variable($name?) {
 }
 
 sub procedure_call($name, *@args) {
-    return PAST::Op.new(:pasttype<call>, :name($name), |@args);
+    return PAST::Op.new(:pasttype<bind>,
+        $paths,
+        PAST::Op.new(:pasttype<call>, :name($name), |@args));
 }
