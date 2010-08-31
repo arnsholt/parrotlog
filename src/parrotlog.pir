@@ -7,12 +7,16 @@
 
     $S0 = term.'output'()
     print $S0
+
+    .return (paths)
 .end
 
 .sub 'nl/0'
     .param pmc paths
 
     print "\n"
+
+    .return (paths)
 .end
 
 .sub '=/2'
@@ -22,6 +26,8 @@
 
     $P0 = get_root_global ['_parrotlog'], 'unify'
     $P0(paths, lhs, rhs)
+
+    .return (paths)
 .end
 
 .sub 'var/1'
@@ -33,7 +39,7 @@
     unless $I0, fail
     $I0 = var.'bound'()
     if $I0, fail
-    .return ()
+    .return (paths)
   fail:
     $P0 = get_root_global ['_parrotlog'], 'fail'
     $P0(paths)
@@ -56,7 +62,7 @@
     unless $I0, fail
     $I0 = var.'arity'()
     unless $I0 == 0 goto fail
-    .return ()
+    .return (paths)
   fail:
     $P0 = get_root_global ['_parrotlog'], 'fail'
     $P0(paths)
@@ -79,7 +85,7 @@
     unless $I0, fail
     $I0 = var.'arity'()
     unless $I0 > 0 goto fail
-    .return ()
+    .return (paths)
   fail:
     $P0 = get_root_global ['_parrotlog'], 'fail'
     $P0(paths)
@@ -100,7 +106,7 @@
     $P0 = get_root_global ['_parrotlog'], 'Float'
     $I0 = $P0.'ACCEPTS'(var)
     unless $I0, fail
-    .return ()
+    .return (paths)
   fail:
     $P0 = get_root_global ['_parrotlog'], 'fail'
     $P0(paths)
@@ -121,7 +127,7 @@
     $P0 = get_root_global ['_parrotlog'], 'Int'
     $I0 = $P0.'ACCEPTS'(var)
     unless $I0, fail
-    .return ()
+    .return (paths)
   fail:
     $P0 = get_root_global ['_parrotlog'], 'fail'
     $P0(paths)
