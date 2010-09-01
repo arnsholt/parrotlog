@@ -142,10 +142,36 @@ sub compile_body($ast) {
         # Section 7.8.6, ';' - disjunction.
         # Section 7.8.8, ';'/2 - if-then-else.
         elsif $arity == 2 && $functor eq ';' {
-            # TODO: ;/2 with ->/2 as first argument (7.8.8).
             my $arg0 := $ast.args[0];
             if $arg0 ~~ Term && $arg0.arity == 2 && $arg0.functor eq '->' {
-                pir::die("If-then-else not implemented yet");
+                my $past := PAST::Block.new(:blocktype<declaration>,
+                    PAST::Var.new(:name<curpaths>, :scope<parameter>));
+
+                my $if := PAST::Block.new(:blocktype<declaration>,
+                    $origdecl,
+                    PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
+                        :viviself($origpaths)),
+                    compile_body($arg0.args[0]));
+                $if := PAST::Op.new(:pasttype<call>, $if, $paths);
+
+                $if := PAST::Stmts.new(
+                    $if,
+                    PAST::Op.new(:pasttype<bind>,
+                        $paths,
+                        PAST::Var.new(:name<curpaths>, :scope<lexical>)),
+                    compile_body($arg0.args[1]));
+
+                my $else := PAST::Stmts.new(
+                    PAST::Op.new(:pasttype<bind>,
+                        $paths,
+                        PAST::Var.new(:name<curpaths>, :scope<lexical>)),
+                    compile_body($ast.args[1]));
+
+                $past.push: choicepoint(
+                    $if,
+                    $else);
+
+                return PAST::Op.new(:pasttype<call>, $past, $paths);
             }
             else {
                 # We wrap disjunctions in their own Block with its own
