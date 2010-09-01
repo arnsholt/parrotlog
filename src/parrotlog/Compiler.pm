@@ -156,13 +156,14 @@ sub compile_body($ast) {
                 # disjunction blocks don't have to return a paths value to the
                 # outer block.
                 my $block := PAST::Block.new(:blocktype<declaration>);
-                $block.push: $origdecl;
+                $block.push: PAST::Var.new(:name<curpaths>, :scope<parameter>);
 
                 $block.push: choicepoint(
                     compile_body($ast.args[0]),
                     PAST::Stmts.new(
                         PAST::Op.new(:pasttype<bind>,
-                            $paths, $origpaths),
+                            $paths,
+                            PAST::Var.new(:name<curpaths>, :scope<lexical>)),
                         compile_body($ast.args[1])));
 
                 return PAST::Op.new(:pasttype<call>, $block, $paths);
