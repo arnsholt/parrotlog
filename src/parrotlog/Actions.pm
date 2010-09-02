@@ -90,7 +90,7 @@ There shall not be an infix and a prefix operator with the same name.
 
 method term:sym<integer>($/) {
     my $ast := $<integer>.ast;
-    if $<neg>.ast {
+    if ~$<neg> {
         $ast.value(-$ast.value);
     }
 
@@ -99,7 +99,7 @@ method term:sym<integer>($/) {
 
 method term:sym<float>($/) {
     my $ast := $<float>.ast;
-    if $<neg>.ast {
+    if ~$<neg> {
         $ast.value(-$ast.value);
     }
 
