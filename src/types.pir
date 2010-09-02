@@ -1,5 +1,7 @@
-# Section 8.3, Type testing
+.HLL 'parrotlog'
+.namespace []
 
+# Section 8.3, Type testing
 # Section 8.3.1, var/1
 .sub 'var/1'
     .param pmc paths
