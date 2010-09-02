@@ -56,12 +56,17 @@
     $P1 = term.'args'()
     $P1 = $P1[0]
     $P1 = 'eval_arith'($P1)
+
   neg:
-    unless $S0 == '-' goto not_evaluable
+    unless $S0 == '-' goto abs
     $P1 = neg $P1
     .return ($P1)
-    # '-'/1
-    # abs/1
+
+  abs:
+    unless $S0 == 'abs' goto not_evaluable
+    $P1 = abs $P1
+    .return ($P1)
+
     # sqrt/1
     # sign/1
     # float_integer_part/1
