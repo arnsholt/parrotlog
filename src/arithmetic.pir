@@ -49,8 +49,28 @@
     if $I0 == 2 goto binary
     goto not_evaluable
 
+  # Section 9.1.1, Evaluable functors and operations
+  # Section 9.3, Other arithmetic functors
+  # Section 9.4, Logical functors
   unary:
-    goto not_evaluable
+    $P1 = term.'args'()
+    $P1 = $P1[0]
+    $P1 = 'eval_arith'($P1)
+  neg:
+    unless $S0 == '-' goto not_evaluable
+    $P1 = neg $P1
+    .return ($P1)
+    # '-'/1
+    # abs/1
+    # sqrt/1
+    # sign/1
+    # float_integer_part/1
+    # float_fractional_part/1
+    # float/1
+    # floor/1
+    # truncate/1
+    # round/1
+    # ceiling/1
 
   binary:
     $P1 = term.'args'()
@@ -59,7 +79,6 @@
     $P1 = 'eval_arith'($P1)
     $P2 = 'eval_arith'($P2)
 
-  # Section 9.1.1, Evaluable functors and operations
   add:
     unless $S0 == '+' goto subtract
     $P1 = $P1 + $P2
@@ -107,8 +126,6 @@
     # mod/2
     # float_truncate/2
     # float_round/2
-    # float_integer_part/2
-    # float_fractional_part/2
 
   nonterm:
     term = term.'value'()
