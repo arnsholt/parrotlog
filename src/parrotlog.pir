@@ -49,11 +49,30 @@
     .return (paths)
 .end
 
+.include 'src/arithmetic.pir'
 .include 'src/types.pir'
 
 .HLL '_parrotlog'
-
 .namespace []
+.sub 'error'
+    .param pmc term
+    .param pmc impldef     :optional
+    .param int has_impldef :opt_flag
+
+    $P0 = get_global 'Term'
+    if has_impldef goto have_impldef
+    impldef = $P0.'from_data'('')
+    # TODO: Set some reasonable value for impldef here.
+  have_impldef:
+    $P0 = $P0.'from_data'('error', term, impldef)
+    $S0 = $P0.'output'()
+
+    $P1 = new 'Exception'
+    $P1['payload'] = $P0
+    throw $P1
+
+    .return ()
+.end
 
 .sub '' :anon :load :init
     load_bytecode 'HLL.pbc'

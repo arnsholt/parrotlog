@@ -47,6 +47,7 @@ PARROTLOG_OTHER_CT_PIR   = src/gen/parrotlog-coretest.pir
 
 PARROTLOG_OTHER_SOURCES = \
     src/parrotlog.pir \
+	src/arithmetic.pir \
 	src/types.pir \
     $(PARROTLOG_OTHER_G_PIR) \
     $(PARROTLOG_OTHER_A_PIR) \
