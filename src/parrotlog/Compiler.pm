@@ -317,11 +317,13 @@ sub compile_body($ast) {
                 PAST::Var.new(:name<unified>, :scope<register>, :isdecl),
                 PAST::Var.new(:name<popeh>, :scope<register>, :isdecl),
                 # Do the right thing depending on the type of the payload.
-                PAST::Op.new(:pasttype<if>,
-                    PAST::Op.new(:pasttype<callmethod>, :name<ACCEPTS>,
-                        $termclass,
-                        $ex),
-                    $is_term,
+                PAST::Op.new(:pasttype<unless>,
+                    PAST::Op.new(:pirop<isnull>, $ex),
+                    PAST::Op.new(:pasttype<if>,
+                        PAST::Op.new(:pasttype<callmethod>, :name<ACCEPTS>,
+                            $termclass,
+                            $ex),
+                        $is_term),
                     $not_term));
 
             # Return the whole shebang wrapped in an exception handler.
