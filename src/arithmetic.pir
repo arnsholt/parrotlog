@@ -110,7 +110,7 @@
     .return ($P1)
 
   intdiv:
-    unless $S0 == '//' goto not_evaluable
+    unless $S0 == '//' goto rem
     $I0 = isa $P1, 'Integer'
     if $I0 goto intdiv_check2
     $P0 = get_global 'Float'
@@ -127,8 +127,49 @@
   do_intdiv:
     $P1 = $P1 / $P2
     .return ($P1)
-    # rem/2
-    # mod/2
+
+  rem:
+    unless $S0 == 'rem' goto mod
+    $I0 = isa $P1, 'Integer'
+    if $I0 goto intdiv_check2
+    $P0 = get_global 'Float'
+    type = box 'integer'
+    culprit = $P0.'create'($P1)
+    goto type_error
+  rem_check2:
+    $I0 = isa $P2, 'Integer'
+    if $I0 goto do_intdiv
+    $P0 = get_global 'Float'
+    type = box 'integer'
+    culprit = $P0.'create'($P2)
+    goto type_error
+  do_rem:
+    $I1 = $P1
+    $I2 = $P2
+    $I3 = mod $I1, $I2
+    $I3 = $I3 * $I2
+    $I1 = $I1 - $I3
+    $P1 = box $I1
+    .return ($P1)
+
+  mod:
+    unless $S0 == 'mod' goto not_evaluable
+    $I0 = isa $P1, 'Integer'
+    if $I0 goto intdiv_check2
+    $P0 = get_global 'Float'
+    type = box 'integer'
+    culprit = $P0.'create'($P1)
+    goto type_error
+  mod_check2:
+    $I0 = isa $P2, 'Integer'
+    if $I0 goto do_intdiv
+    $P0 = get_global 'Float'
+    type = box 'integer'
+    culprit = $P0.'create'($P2)
+    goto type_error
+  do_mod:
+    $P1 = mod $P1, $P2
+    .return ($P1)
     # float_truncate/2
     # float_round/2
 
