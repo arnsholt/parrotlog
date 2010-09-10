@@ -90,13 +90,22 @@ sub is_op($op) {
 }
 
 # Section 6.2.1, Prolog text and data
-token TOP {
+method TOP() {
+    $*DIRECTIVES ?? self.with_directives !! self.no_directives;
+}
+
+token with_directives {
     #<?DEBUG>
     #[<term=.EXPR> <.end>]*
 
     # Serial alternation to make sure we check for directive before
     # interpreting as clause.
     [<directive> || <clause>]*
+    [ <.ws> $ || <.panic: "Syntax error"> ]
+}
+
+token no_directives {
+    <clause>*
     [ <.ws> $ || <.panic: "Syntax error"> ]
 }
 

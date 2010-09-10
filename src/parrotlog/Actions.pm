@@ -1,6 +1,6 @@
 class Parrotlog::Actions is HLL::Actions;
 
-method TOP($/) {
+sub make_ast($/) {
     # We make the AST a hash of arrays, with a single hash entry for each
     # predicate.
     # XXX: How this will interact with queries typed on the REPL remains to be
@@ -24,7 +24,15 @@ arity. foo cannot be a built-in or a control construct.
         %ast{$spec}.push: $ast;
     }
 
-    make %ast;
+    return %ast;
+}
+
+method with_directives($/) {
+    make make_ast($/);
+}
+
+method no_directives($/) {
+    make make_ast($/);
 }
 
 # XXX: Directive handling should probably be folded into the grammar, rather

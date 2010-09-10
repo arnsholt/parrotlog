@@ -14,6 +14,22 @@ INIT {
     $paths := PAST::Var.new(:name<paths>, :scope<lexical>);
 }
 
+method command_line(@args, *%adverbs) {
+    my $parrotclass := self.HOW.get_parrotclass(self);
+    my $parent := $parrotclass.parents[0];
+    my $method := $parent.find_method('command_line');
+    my $*DIRECTIVES := 0;
+    return $method(self, @args, |%adverbs);
+}
+
+method evalfiles($files, *@args, *%adverbs) {
+    my $parrotclass := self.HOW.get_parrotclass(self);
+    my $parent := $parrotclass.parents[0];
+    my $method := $parent.find_method('evalfiles');
+    my $*DIRECTIVES := 1;
+    return $method(self, $files, |@args, |%adverbs);
+}
+
 method past($source, *%adverbs) {
     my $ast := $source.ast;
     # Main driver code. On program start, set up backtracking stack and call
