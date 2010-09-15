@@ -234,7 +234,7 @@ token close { ')' }
 token layout_char { <space> | \n }
 
 # Operators:
-token circumfix:sym<( )> { <.ws> <.open> <EXPR> <.ws> <.close> }
+rule circumfix:sym<( )> { <.open> ~ <.close> <EXPR> }
 token infix:sym<prolog> {
     # The infix operators need a special case for comma, since it isn't a
     # <name>.
