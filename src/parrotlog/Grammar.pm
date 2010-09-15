@@ -155,9 +155,7 @@ token exp:sym<op> { <.ws> <atom> <?{ is_op($<atom>.ast) && $<atom>.ast ne ',' }>
 
 # Section 6.3.5, compound terms - list notation
 token term:sym<list> { <.open_list> ~ <.close_list> <items> }
-proto token items { <...> }
-token items:sym<more> { <exp> <.comma> <items> }
-token items:sym<last> { <car=.exp> [<.ht> <cdr=.exp>]? }
+token items { <exp>**<.comma> [<.ht> <cdr=.exp>]? }
 
 # Section 6.3.6, compound terms - curly bracket notation
 token term:sym<curly> { <.open_curly> ~ <.close_curly> <EXPR> }
