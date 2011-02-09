@@ -1,5 +1,4 @@
 # Copyright (C) 2006-2009, The Perl Foundation.
-# $Id: create_language.pl 42892 2009-12-04 20:05:00Z mikehh $
 
 PARROT_ARGS      =
 
@@ -13,7 +12,7 @@ PARROT_LIBRARY_DIR = $(PARROT_LIB_DIR)/library
 HAS_ICU            = @has_icu@
 
 CC            = @cc@
-CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cc_hasjit@ @cg_flag@ @gc_flag@
+CFLAGS        = @ccflags@ @cc_shared@ @cc_debug@ @ccwarn@ @cg_flag@ @gc_flag@
 EXE           = @exe@
 LD            = @ld@
 LDFLAGS       = @ldflags@ @ld_debug@
@@ -35,57 +34,57 @@ PBC_TO_EXE       = $(PARROT_BIN_DIR)/pbc_to_exe$(EXE)
 PARROT_TOOLS_DIR = $(PARROT_LIB_DIR)/tools
 PARROT_PERL_LIB  = $(PARROT_TOOLS_DIR)/lib
 
-PARROTLOG_OTHER_LANG_DIR     = $(PARROT_LIB_DIR)/languages/parrotlog
+PARROTLOG_LANG_DIR     = $(PARROT_LIB_DIR)/languages/parrotlog
 
-PARROTLOG_OTHER_EXE      = parrotlog$(EXE)
-PARROTLOG_OTHER_PBC      = parrotlog.pbc
-PARROTLOG_OTHER_G_PIR    = src/gen/parrotlog-grammar.pir
-PARROTLOG_OTHER_A_PIR    = src/gen/parrotlog-actions.pir
-PARROTLOG_OTHER_C_PIR    = src/gen/parrotlog-compiler.pir
-PARROTLOG_OTHER_R_PIR    = src/gen/parrotlog-runtime.pir
-PARROTLOG_OTHER_CT_PIR   = src/gen/parrotlog-coretest.pir
+PARROTLOG_EXE     = parrotlog$(EXE)
+PARROTLOG_PBC     = parrotlog.pbc
+PARROTLOG_G_PIR   = src/gen/parrotlog-grammar.pir
+PARROTLOG_A_PIR   = src/gen/parrotlog-actions.pir
+PARROTLOG_C_PIR   = src/gen/parrotlog-compiler.pir
+PARROTLOG_R_PIR   = src/gen/parrotlog-runtime.pir
+PARROTLOG_CT_PIR  = src/gen/parrotlog-coretest.pir
 
-PARROTLOG_OTHER_SOURCES = \
+PARROTLOG_SOURCES = \
     src/parrotlog.pir \
 	src/arithmetic.pir \
 	src/types.pir \
-    $(PARROTLOG_OTHER_G_PIR) \
-    $(PARROTLOG_OTHER_A_PIR) \
-    $(PARROTLOG_OTHER_C_PIR) \
-    $(PARROTLOG_OTHER_R_PIR) \
-	$(PARROTLOG_OTHER_CT_PIR) \
+    $(PARROTLOG_G_PIR) \
+    $(PARROTLOG_A_PIR) \
+    $(PARROTLOG_C_PIR) \
+    $(PARROTLOG_R_PIR) \
+	$(PARROTLOG_CT_PIR) \
 
 CLEANUPS = \
   *.manifest \
   *.pdb \
   *.c\
   *.o\
-  $(PARROTLOG_OTHER_EXE) \
-  $(PARROTLOG_OTHER_PBC) \
+  $(PARROTLOG_EXE) \
+  $(PARROTLOG_PBC) \
   src/gen/*.pir \
 
-default: $(PARROTLOG_OTHER_EXE)
+default: $(PARROTLOG_EXE)
 
-all: $(PARROTLOG_OTHER_EXE)
+all: $(PARROTLOG_EXE)
 
-$(PARROTLOG_OTHER_EXE) : $(PARROTLOG_OTHER_SOURCES)
-	$(PARROT) -o $(PARROTLOG_OTHER_PBC) src/parrotlog.pir
-	$(PBC_TO_EXE) $(PARROTLOG_OTHER_PBC)
+$(PARROTLOG_EXE) : $(PARROTLOG_SOURCES)
+	$(PARROT) -o $(PARROTLOG_PBC) src/parrotlog.pir
+	$(PBC_TO_EXE) $(PARROTLOG_PBC)
 
-$(PARROTLOG_OTHER_G_PIR): src/parrotlog/Grammar.pm
-	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_G_PIR) src/parrotlog/Grammar.pm
-$(PARROTLOG_OTHER_A_PIR): src/parrotlog/Actions.pm
-	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_A_PIR) src/parrotlog/Actions.pm
-$(PARROTLOG_OTHER_C_PIR): src/parrotlog/Compiler.pm
-	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_C_PIR) src/parrotlog/Compiler.pm
-$(PARROTLOG_OTHER_R_PIR): src/parrotlog/Runtime.pm
-	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_R_PIR) src/parrotlog/Runtime.pm
-$(PARROTLOG_OTHER_CT_PIR): src/parrotlog/Coretest.pm
-	$(PARROT_NQP) --target=pir -o $(PARROTLOG_OTHER_CT_PIR) src/parrotlog/Coretest.pm
+$(PARROTLOG_G_PIR): src/parrotlog/Grammar.pm
+	$(PARROT_NQP) --target=pir -o $(PARROTLOG_G_PIR) src/parrotlog/Grammar.pm
+$(PARROTLOG_A_PIR): src/parrotlog/Actions.pm
+	$(PARROT_NQP) --target=pir -o $(PARROTLOG_A_PIR) src/parrotlog/Actions.pm
+$(PARROTLOG_C_PIR): src/parrotlog/Compiler.pm
+	$(PARROT_NQP) --target=pir -o $(PARROTLOG_C_PIR) src/parrotlog/Compiler.pm
+$(PARROTLOG_R_PIR): src/parrotlog/Runtime.pm
+	$(PARROT_NQP) --target=pir -o $(PARROTLOG_R_PIR) src/parrotlog/Runtime.pm
+$(PARROTLOG_CT_PIR): src/parrotlog/Coretest.pm
+	$(PARROT_NQP) --target=pir -o $(PARROTLOG_CT_PIR) src/parrotlog/Coretest.pm
 
 ## testing
 
-test: $(PARROTLOG_OTHER_EXE)
+test: $(PARROTLOG_EXE)
 	$(PERL) t/harness t
 
 switest:
@@ -94,10 +93,10 @@ switest:
 ## installation
 
 install: all
-	$(MKPATH)        $(DESTDIR)$(PARROTLOG_OTHER_LANG_DIR)
-	$(CP) $(PARROTLOG_OTHER_PBC) $(DESTDIR)$(PARROTLOG_OTHER_LANG_DIR)
-	$(CP) $(PARROTLOG_OTHER_EXE) $(DESTDIR)$(PARROT_BIN_DIR)
-	$(CHMOD) 755     $(DESTDIR)$(PARROT_BIN_DIR)/$(PARROTLOG_OTHER_EXE)
+	$(MKPATH)        $(DESTDIR)$(PARROTLOG_LANG_DIR)
+	$(CP) $(PARROTLOG_PBC) $(DESTDIR)$(PARROTLOG_LANG_DIR)
+	$(CP) $(PARROTLOG_EXE) $(DESTDIR)$(PARROT_BIN_DIR)
+	$(CHMOD) 755     $(DESTDIR)$(PARROT_BIN_DIR)/$(PARROTLOG_EXE)
 
 ## cleaning
 
@@ -117,9 +116,9 @@ help:
 	@echo ""
 	@echo "Following targets are available for the user:"
 	@echo ""
-	@echo "  all:               $(PARROTLOG_OTHER_EXE)"
+	@echo "  all:               $(PARROTLOG_EXE)"
 	@echo "                     This is the default."
-	@echo "  $(PARROTLOG_OTHER_EXE):        The parrotlog compiler."
+	@echo "  $(PARROTLOG_EXE):        The parrotlog compiler."
 	@echo "  install:           Install compiler into Parrot."
 	@echo ""
 	@echo "Testing:"

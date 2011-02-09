@@ -43,10 +43,15 @@ close $REQ;
     }
 }
 
-print "Checking out Parrot r$reqsvn via svn...\n";
-system(qw(svn checkout -r),  $reqsvn , qw(https://svn.parrot.org/parrot/trunk parrot));
+print "Cloning the Parrot git repo...\n";
+system(qw(git clone), qw(http://github.com/parrot/parrot.git));
 
-chdir('parrot');
+chdir('parrot') or die "Can't chdir to parrot: $!";
+
+system("git checkout $reqsvn");
+
+# TODO: error checking
+
 
 
 ##  If we have a Makefile from a previous build, do a 'make realclean'
@@ -75,7 +80,7 @@ system($make, 'install-dev', @make_opts);
 
 sub read_parrot_config {
     my %config = ();
-    if (open my $CFG, "config_lib.pasm") {
+    if (open my $CFG, "config_lib.pir") {
         while (<$CFG>) {
             if (/P0\["(.*?)"], "(.*?)"/) { $config{$1} = $2 }
         }
