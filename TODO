@@ -1,28 +1,16 @@
-So far, we're based on http://www.perlmonks.org/?node_id=193649 and On Lisp,
-by Paul Graham.
-
-- We need to implement choose() and fail() from Graham chapter 22, as well as
-  mark() and cut().
-- We also need some way to represent the database of facts. Graham chapter 19
-  has one possibility, but maybe something else is more appropriate for
-  Parrot.
-- We need a class/PMC for Prolog variables, and a way to unify them with each
-  other and terms. Lists and structures probably need special treatment.
-- Rules should be represented by Parrot subs, the names, probably in the
-  standard style with arity: .sub 'append/3' The general structure of a rule
-  foo(X, Y) :- bar(Y, Z), blech(X, Z) should probably be:
-
-.sub 'foo/2'
-    .param pmc X
-    .param pmc Y
-    .local pmc Z
-
-    'mark'()
-
-    'bar/2'(Y, Z)
-
-    'blech/2'(X, Z)
-.end
-
-- A cut should call cut() to pop choice points up to the previous mark, and
-  then call mark() again to set a new mark.
+- call/1 has to be implemented properly. Current plan:
+  - Implement in PIR, as normal predicate.
+  - The input argument is then converted to a goal (this requires refactoring
+    the compiler to move PAST-generation logic from Parrotlog::Compiler to
+    Term).
+  - Use PAST::Compiler to create POST, POST::Compiler to get PIR, and
+    compreg('pir') to get the PIR compiled to bytecode (see Rakudo's
+    src/cheats/eval.pm for how to embed it in a lexical scope).
+  - Invoke the callable.
+- Ideally, the compiler should flow differently.
+  - Any file arguments are compiled as Prolog text
+  - Any -e arguments, and anything input on the REPL is run as a query
+    - Maybe it's possible to implement the REPL in Prolog, once enough of
+      the scaffolding is in place?
+  - Ultimately, this might be best done by adding a few more points where
+    HLL::Compiler can be extended.
