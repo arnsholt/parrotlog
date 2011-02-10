@@ -1,3 +1,4 @@
+# vim:syntax=perl6
 class Parrotlog::Compiler is HLL::Compiler;
 
 our $origpaths;

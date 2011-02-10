@@ -1,3 +1,5 @@
+# vim:syntax=perl6
+
 =begin spec
 
 The spec gives five, mutually exclusive types for terms: variables, integers,

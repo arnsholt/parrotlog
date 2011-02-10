@@ -1,3 +1,5 @@
+# vim:syntax=perl6
+
 =begin description
 
 Code for testing the correct workings of Parrolog's internals.

@@ -1,3 +1,4 @@
+# vim:syntax=perl6
 class Parrotlog::Actions is HLL::Actions;
 
 sub make_ast($/) {

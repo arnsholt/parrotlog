@@ -1,3 +1,5 @@
+# vim:syntax=perl6
+
 =begin overview
 
 This is the grammar for parrotlog in Perl 6 rules.
