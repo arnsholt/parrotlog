@@ -236,6 +236,7 @@
 .include 'src/gen/parrotlog-compiler.pir'
 .include 'src/gen/parrotlog-runtime.pir'
 .include 'src/gen/parrotlog-coretest.pir'
+.include 'src/gen/parrotlog-term.pir'
 
 .namespace []
 .sub 'main' :main
