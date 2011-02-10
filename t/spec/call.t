@@ -46,3 +46,5 @@ test10 :- write('not ok 10 # TODO: Error reporting'), nl.
 
 % [call((1; true)), type_error(callable,(1; true))].
 test11 :- write('not ok 11 # TODO: Error reporting'), nl.
+
+% vim:filetype=prolog

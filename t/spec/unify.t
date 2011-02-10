@@ -61,3 +61,5 @@ test11 :- '='(f(A,B,C),f(g(B,B),g(C,C),g(D,D))),
     C  = g(D,D),
     write('ok 11'), nl.
 test11 :- write('not ok 11'), nl.
+
+% vim:filetype=prolog

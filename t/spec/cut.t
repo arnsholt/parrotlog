@@ -12,3 +12,5 @@ test2 :- (!, fail;true), write('not ok 2'), nl.
 % [(call(!),fail;true), success].
 test3 :- (call(!),fail;true), write('ok 3'), nl.
 test3 :- write('not ok 3'), nl.
+
+% vim:filetype=prolog

@@ -34,3 +34,5 @@ test6 :- write('ok 6'), nl.
 % [atom(3.3), failure].
 test7 :- atom(3.3), write('not ok 7'), nl.
 test7 :- write('ok 7'), nl.
+
+% vim:filetype=prolog

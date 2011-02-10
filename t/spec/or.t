@@ -20,3 +20,5 @@ test4 :- ';'((X=1, !), X=2), (X = 1, write('ok 4'), nl, fail ; X = 2, write('not
 % [';'(X=1, X=2), [[X <-- 1], [X <-- 2]]].
 test5 :- ';'(X=1, X=2), (X = 1, write('ok 6'), nl, fail ; X = 2, write('ok 7'), nl).
 test5 :- write('not ok 7').
+
+% vim:filetype=prolog

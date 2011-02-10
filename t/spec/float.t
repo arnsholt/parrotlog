@@ -24,3 +24,5 @@ test4 :- write('ok 4'), nl.
 % [float(X), failure].
 test5 :- float(X), write('not ok 5'), nl.
 test5 :- write('ok 5'), nl.
+
+% vim:filetype=prolog

@@ -8,3 +8,5 @@ test1 :- write('not ok 1'), nl.
 
 test2 :- X = a(b), compound(X), write('ok 2'), nl.
 test2 :- write('not ok 2'), nl.
+
+% vim:filetype=prolog

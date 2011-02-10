@@ -24,3 +24,5 @@ test5 :- write('ok 6'), nl.
 
 test6 :- ->(true, ;(X = 1, X = 2)), (X = 1, write('ok 7'), nl, fail ; X = 2, write('ok 8'), nl).
 test6 :- write('not ok 8'), nl.
+
+% vim:filetype=prolog

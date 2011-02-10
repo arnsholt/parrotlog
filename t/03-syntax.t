@@ -7,3 +7,5 @@
 main :- write('1..1'), nl,
     write('ok 1'), nl.
 foo :- X = f(:-, ;, [:-, :-|:-]).
+
+% vim:filetype=prolog

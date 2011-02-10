@@ -34,3 +34,5 @@ test6 :- write('not ok 6'), nl.
 % [compound([a]),success].
 test7 :- compound([a]), write('ok 7'), nl.
 test7 :- write('not ok 7'), nl.
+
+% vim:filetype=prolog

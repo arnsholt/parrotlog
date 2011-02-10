@@ -29,3 +29,5 @@ test5 :- write('ok 5'), nl.
 % [nonvar(a(b)), success].
 test6 :- nonvar(a(b)), write('ok 6'), nl.
 test6 :- write('not ok 6'), nl.
+
+% vim:filetype=prolog

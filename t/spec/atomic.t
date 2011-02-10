@@ -29,3 +29,5 @@ test5 :- write('not ok 5'), nl.
 % [atomic(3.3), success].
 test6 :- atomic(3.3), write('ok 6'), nl.
 test6 :- write('not ok 6'), nl.
+
+% vim:filetype=prolog

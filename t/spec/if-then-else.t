@@ -39,3 +39,5 @@ test7 :- write('not ok 8'), nl.
 % [';'('->'(';'(X=1, X=2), true), true), [[X <-- 1]]].
 test8 :- ';'('->'(';'(X=1, X=2), true), true), (X = 1, write('ok 9'), nl, fail; X = 2, write('not ok 10'), nl).
 test8 :- write('ok 10'), nl.
+
+% vim:filetype=prolog

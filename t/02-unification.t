@@ -19,3 +19,5 @@ bar(_) :- write('not ').
 
 test4 :- (1 = '1', write('not '); true), write('ok 4 - difference of integers and atoms'), nl.
 test5 :- (1.0 = '1.0', write('not '); true), write('ok 5 - difference of floats and atoms'), nl.
+
+% vim:filetype=prolog

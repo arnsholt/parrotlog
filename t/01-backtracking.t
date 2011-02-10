@@ -20,3 +20,5 @@ third :- write('ok 5 - fallback'), nl.
 
 % Check for bug where cuts don't propagate outside disjunctions.
 fourth :- (true; write('not ')), (! ; true), fail.
+
+% vim:filetype=prolog

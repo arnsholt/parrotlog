@@ -23,3 +23,5 @@ test4 :- write('ok 4 # SKIP exception'), nl.
 
 %[','(X = true, call(X)), [[X <-- true]]].
 test5 :- write('ok 5 # SKIP not implemented'), nl.
+
+% vim:filetype=prolog

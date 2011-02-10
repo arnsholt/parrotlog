@@ -7,3 +7,5 @@ test2 :-
     catch(
         catch(throw(foo), bar, (write('not ok 2'), nl)),
     foo, (write('ok 2'), nl)).
+
+% vim:filetype=prolog

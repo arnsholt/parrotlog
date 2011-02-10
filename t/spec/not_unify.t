@@ -49,3 +49,5 @@ test9 :- write('not ok 9'), nl.
 % ['\\='(f(X,Y,X),f(a(X),a(Y),Y,2)), success].
 test10 :- '\\='(f(X,Y,X),f(a(X),a(Y),Y,2)), write('ok 10'), nl.
 test10 :- write('not ok 10'), nl.
+
+% vim:filetype=prolog
