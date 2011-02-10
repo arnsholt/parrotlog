@@ -227,22 +227,6 @@ method as_query() {
             $paths,
             $origpaths);
     }
-    # Section 7.8.3, call/1.
-    elsif $arity == 1 && $functor eq 'call' {
-        if self.args[0] ~~ Term {
-            return PAST::Op.new(:pasttype<call>,
-                PAST::Block.new(:blocktype<declaration>,
-                    $origdecl,
-                    PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
-                        :viviself($origpaths)),
-                    self.args[0].as_query,
-                    $paths),
-                $paths);
-        }
-        else {
-            return Parrotlog::Compiler::call_internal('call', $origpaths, self.args[0].past);
-        }
-    }
     # Section 7.8.1, true/0.
     elsif $arity == 0 && $functor eq 'true' {
         return PAST::Stmts.new();

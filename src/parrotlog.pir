@@ -49,6 +49,52 @@
     .return (paths)
 .end
 
+# Section 7.8.3, call/1.
+.sub 'call/1'
+    .param pmc inpaths
+    .param pmc target
+
+    .local pmc varclass
+    .local pmc compiler
+    .local pmc caller
+
+    varclass = get_root_global ['_parrotlog'], 'Variable'
+    $I0 = varclass.'ACCEPTS'(varclass)
+    unless $I0, nonvar
+    target = target.'value'()
+  nonvar:
+    # TODO: Check for null target.
+    compiler = compreg 'Parrotlog'
+    $P0 = getinterp
+    caller = $P0['context']
+
+    target = target.'as_query'()
+    $P1 = get_root_global ['parrot'; 'PAST'], 'Block'
+    target = $P1.'new'(target, 'blocktype' => 'declaration', 'hll' => 'parrotlog')
+
+    target = compiler.'post'(target, 'outer_ctx' => caller)
+    target = compiler.'pir'(target, 'outer_ctx' => caller)
+    target = compiler.'evalpmc'(target, 'outer_ctx' => caller)
+
+    # Set outer context.
+    $P1 = target[0]
+    $P2 = getattribute caller, 'current_sub'
+    $P1.'set_outer'($P2)
+
+    # Set up cut domain for goal.
+    .lex "origpaths", inpaths
+    .lex "paths", inpaths
+
+    $P4 = get_root_global ['_parrotlog'], 'choicepoint'
+    $P5 = $P4(inpaths)
+    $I0 = isnull $P5
+    if $I0, failure
+
+    target()
+  failure:
+    .return (inpaths)
+.end
+
 .include 'src/arithmetic.pir'
 .include 'src/types.pir'
 
@@ -86,37 +132,6 @@
     $P0 = newclass 'Cons'
     addattribute $P0, 'car'
     addattribute $P0, 'cdr'
-.end
-
-.sub 'call'
-    .param pmc origpaths
-    .param pmc var
-
-    $I0 = var.'bound'()
-    if $I0, bound
-
-    $P0 = get_root_global ['_parrotlog'], 'Term'
-    $P1 = $P0.'from_data'('instantiation_error')
-    $P1 = $P0.'from_data'('error', $P1, $P1)
-    $P2 = new 'Exception'
-    $P2['payload'] = $P1
-    throw $P2
-
-  bound:
-    var = var.'value'()
-
-    .local string functor
-    .local string arity
-    .local pmc args
-
-    functor = var.'functor'()
-    arity = var.'arity'()
-    args = var.'args'()
-
-    $S0 = functor . "/"
-    $S0 = $S0 . arity
-    $P0 = get_root_global ['parrotlog'], $S0
-    $P0(origpaths, args :flat)
 .end
 
 # Non-deterministic search. Choose an element from a list of options, with the
