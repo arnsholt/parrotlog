@@ -137,9 +137,18 @@ method past() {
 }
 
 # Section 7.6.2, converting a term to the body of a clause.
-method as_query() {
+method as_query($in_block = 0) {
     my $functor := self.functor;
     my $arity := self.arity;
+
+    if $in_block {
+        my $block := PAST::Block.new(:blocktype<declaration>, :hll<parrotlog>);
+        $block.push: PAST::Var.new(:name<origpaths>, :scope<parameter>);
+        $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
+            :viviself(PAST::Var.new(:name<origpaths>, :scope<lexical>)));
+        $block.push: self.as_query;
+        return $block;
+    }
 
     # Table 7, Principal functors and control structures gives the terms
     # that get special handling.

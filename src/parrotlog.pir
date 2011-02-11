@@ -72,12 +72,9 @@
     target = $P0
     compiler = compreg 'Parrotlog'
     $P0 = getinterp
-    caller = $P0['context']
+    caller = $P0['context';1]
 
-    target = target.'as_query'()
-    $P1 = get_root_global ['parrot'; 'PAST'], 'Block'
-    target = $P1.'new'(target, 'blocktype' => 'declaration', 'hll' => 'parrotlog')
-
+    target = target.'as_query'(1)
     target = compiler.'post'(target, 'outer_ctx' => caller)
     target = compiler.'pir'(target, 'outer_ctx' => caller)
     target = compiler.'evalpmc'(target, 'outer_ctx' => caller)
@@ -96,7 +93,7 @@
     $I0 = isnull $P5
     if $I0, failure
 
-    target()
+    target(inpaths)
   failure:
     .return (inpaths)
 .end

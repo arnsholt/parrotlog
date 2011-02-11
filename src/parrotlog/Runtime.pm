@@ -127,7 +127,7 @@ class Variable is PrologTerm {
         }
     }
 
-    method as_query() {
+    method as_query($in_block = 0) {
         return Term.from_data('call', self).as_query;
     }
 }
@@ -165,7 +165,7 @@ class Int is PrologTerm {
         return $call;
     }
 
-    method as_query() {
+    method as_query($in_block = 0) {
         type_error('callable', self);
     }
 }
@@ -203,7 +203,7 @@ class Float is PrologTerm {
         return $call;
     }
 
-    method as_query() {
+    method as_query($in_block = 0) {
         type_error('callable', self);
     }
 }
