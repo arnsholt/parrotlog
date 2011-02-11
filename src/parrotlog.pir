@@ -59,7 +59,8 @@
     .local pmc caller
 
     varclass = get_root_global ['_parrotlog'], 'Variable'
-    $I0 = varclass.'ACCEPTS'(varclass)
+    $P0 = target
+    $I0 = varclass.'ACCEPTS'($P0)
     unless $I0, nonvar
     $P0 = target.'value'()
   nonvar:
@@ -134,6 +135,19 @@
     $P2 = $P0.'from_data'('')
 
     'error'($P1, $P2)
+.end
+
+.sub 'type_error'
+    .param pmc type
+    .param pmc thing
+
+    $P0 = get_global 'Term'
+
+    $P1 = $P0.'from_data'(type)
+    $P2 = $P0.'from_data'('type_error', $P1, thing)
+    $P3 = $P0.'from_data'('')
+
+    'error'($P2, $P3)
 .end
 
 .sub '' :anon :load :init

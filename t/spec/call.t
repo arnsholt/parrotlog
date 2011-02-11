@@ -27,26 +27,30 @@ test4 :- call((fail, call(1))), write('not ok 4'), nl.
 test4 :- write('ok 4'), nl.
 
 % [call((write(3), X)), instantiation_error].
-%test5 :- write('not ok 5 # TODO: Error reporting'), nl.
-test5 :- catch(call((write('# Writing...'), nl, _)), error(instantiation_error, _), (write('ok 5'), nl)).
+test5 :- catch(call((write('# Writing...'), nl, _)), X, instantiation_error(X)).
 
 % [call((write(3), call(1))), type_error(callable,1)].
-test6 :- write('not ok 6 # TODO: Error reporting'), nl.
+test6 :- catch(call((write('# Writing...'), nl, call(1))), X, type_error(X, callable, 1)).
 
 % [call(X), instantiation_error].
-%test7 :- write('not ok 7 # TODO: Error reporting'), nl.
-test7 :- catch(call(_), error(instantiation_error, _), (write('ok 7'), nl)).
+test7 :- catch(call(_), X, instantiation_error(X)).
 
 % [call(1), type_error(callable,1)].
-test8 :- write('not ok 8 # TODO: Error reporting'), nl.
+test8 :- catch(call(1), X, type_error(X, callable, 1)).
 
 % [call((fail, 1)), type_error(callable,(fail,1))].
-test9 :- write('not ok 9 # TODO: Error reporting'), nl.
+test9 :- catch(call((fail, 1)), X, type_error(X, callable, 1)).
 
 % [call((write(3), 1)), type_error(callable,(write(3), 1))].
-test10 :- write('not ok 10 # TODO: Error reporting'), nl.
+test10 :- catch(call((write('# Whut?'), nl, 1)), X, type_error(X, callable, 1)).
 
 % [call((1; true)), type_error(callable,(1; true))].
-test11 :- write('not ok 11 # TODO: Error reporting'), nl.
+test11 :- catch(call((1; true)), X, type_error(X, callable, 1)).
+
+instantiation_error(error(instantiation_error, _)) :- write('ok'), nl.
+instantiation_error(_) :- write('not ok'), nl.
+
+type_error(error(type_error(Type, Culprint), _), Type, Culprit) :- write('ok'), nl.
+type_error(_) :- write('not ok'), nl.
 
 % vim:filetype=prolog

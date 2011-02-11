@@ -164,6 +164,10 @@ class Int is PrologTerm {
 
         return $call;
     }
+
+    method as_query() {
+        type_error('callable', self);
+    }
 }
 
 class Float is PrologTerm {
@@ -197,6 +201,10 @@ class Float is PrologTerm {
             PAST::Val.new(:value($!value)));
 
         return $call;
+    }
+
+    method as_query() {
+        type_error('callable', self);
     }
 }
 
