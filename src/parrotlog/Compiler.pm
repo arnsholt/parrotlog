@@ -109,8 +109,7 @@ sub compile_clause($clause, @args) {
 
     my %vars;
     for $clause.variable_set.contents -> $var {
-        $past.push: PAST::Var.new(:name($var), :isdecl, :scope<lexical>,
-            :viviself(variable($var)));
+        $past.push: variable($var);
         %vars{$var} := PAST::Var.new(:name($var), :scope<lexical>);
     }
 
@@ -156,10 +155,11 @@ sub variable($name?) {
         :inline("    %r = root_new ['_parrotlog'; 'Variable']"));
     if pir::defined($name) {
         return PAST::Stmts.new(
+            PAST::Var.new(:name($name), :isdecl, :scope<lexical>,
+                :viviself($obj)),
             PAST::Op.new(:pasttype<callmethod>, :name<name>,
-                $obj,
-                PAST::Val.new(:value($name))),
-            $obj);
+                PAST::Var.new(:name($name), :scope<lexical>),
+                PAST::Val.new(:value($name))));
     }
     else {
         return $obj;

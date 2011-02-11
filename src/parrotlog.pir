@@ -61,9 +61,14 @@
     varclass = get_root_global ['_parrotlog'], 'Variable'
     $I0 = varclass.'ACCEPTS'(varclass)
     unless $I0, nonvar
-    target = target.'value'()
+    $P0 = target.'value'()
   nonvar:
-    # TODO: Check for null target.
+    $I0 = isa $P0, 'Undef'
+    unless $I0, nonnull
+    $P0 = get_root_global ['_parrotlog'], 'instantiation_error'
+    $P0(target)
+  nonnull:
+    target = $P0
     compiler = compreg 'Parrotlog'
     $P0 = getinterp
     caller = $P0['context']
@@ -118,6 +123,17 @@
     throw $P1
 
     .return ()
+.end
+
+.sub 'instantiation_error'
+    .param pmc culprit
+
+    $P0 = get_global 'Term'
+    $P1 = $P0.'from_data'('instantiation_error')
+    #$P2 = culprit.'name'()
+    $P2 = $P0.'from_data'('')
+
+    'error'($P1, $P2)
 .end
 
 .sub '' :anon :load :init

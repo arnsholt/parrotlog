@@ -241,9 +241,9 @@ method as_query() {
         # domains. If that's so, the Stmts nodes have to be changed to
         # Blocks with their own paths lexicals.
         # First, compile the arguments to catch/3 into the correct forms.
-        my $goal :=  Term.from_data('call', self.args[0]).as_query;
+        my $goal := PAST::Block.new(:blocktype<immediate>, self.args[0].as_query);
         my $catcher := self.args[1].past;
-        my $recovery := Term.from_data('call', self.args[2]).as_query;
+        my $recovery := PAST::Block.new(:blocktype<immediate>, self.args[2].as_query);
 
         # Some bookkeeping variables we'll be needing.
         my $ex := PAST::Var.new(:name<ex>, :scope<lexical>);

@@ -27,13 +27,15 @@ test4 :- call((fail, call(1))), write('not ok 4'), nl.
 test4 :- write('ok 4'), nl.
 
 % [call((write(3), X)), instantiation_error].
-test5 :- write('not ok 5 # TODO: Error reporting'), nl.
+%test5 :- write('not ok 5 # TODO: Error reporting'), nl.
+test5 :- catch(call((write('# Writing...'), nl, _)), error(instantiation_error, _), (write('ok 5'), nl)).
 
 % [call((write(3), call(1))), type_error(callable,1)].
 test6 :- write('not ok 6 # TODO: Error reporting'), nl.
 
 % [call(X), instantiation_error].
-test7 :- write('not ok 7 # TODO: Error reporting'), nl.
+%test7 :- write('not ok 7 # TODO: Error reporting'), nl.
+test7 :- catch(call(_), error(instantiation_error, _), (write('ok 7'), nl)).
 
 % [call(1), type_error(callable,1)].
 test8 :- write('not ok 8 # TODO: Error reporting'), nl.
