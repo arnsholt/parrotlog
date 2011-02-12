@@ -167,6 +167,7 @@ sub variable($name?) {
 }
 
 sub procedure_call($name, *@args) {
+    # TODO: Check that procedure exists and throw proper error if not.
     return PAST::Op.new(:pasttype<bind>,
         $paths,
         PAST::Op.new(:pasttype<call>, :name($name), |@args));
