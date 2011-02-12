@@ -50,7 +50,7 @@ test11 :- catch(call((1; true)), X, type_error(X, callable, 1)).
 instantiation_error(error(instantiation_error, _)) :- write('ok'), nl.
 instantiation_error(_) :- write('not ok'), nl.
 
-type_error(error(type_error(Type, Culprint), _), Type, Culprit) :- write('ok'), nl.
+type_error(error(type_error(Type, Culprit), _), Type, Culprit) :- write('ok'), nl.
 type_error(_) :- write('not ok'), nl.
 
 % vim:filetype=prolog
