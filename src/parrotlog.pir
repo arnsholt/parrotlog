@@ -84,18 +84,7 @@
     $P2 = getattribute caller, 'current_sub'
     $P1.'set_outer'($P2)
 
-    # Set up cut domain for goal.
-    .lex "origpaths", inpaths
-    .lex "paths", inpaths
-
-    $P4 = get_root_global ['_parrotlog'], 'choicepoint'
-    $P5 = $P4(inpaths)
-    $I0 = isnull $P5
-    if $I0, failure
-
-    target(inpaths)
-  failure:
-    .return (inpaths)
+    .tailcall target(inpaths)
 .end
 
 .include 'src/arithmetic.pir'
@@ -193,6 +182,9 @@
     .local pmc cc
     .local pmc rest
 
+    $I0 = isa paths, 'Cons'
+    unless $I0, badstack
+
     cc = getattribute paths, 'car'
     rest = getattribute paths, 'cdr'
 
@@ -200,6 +192,11 @@
     # mark) -does-, so we have to supply the argument in order to not fail
     # when backtracking over the mark.
     .tailcall cc(rest)
+  badstack:
+    $P0 = class paths
+    $S0 = $P0.'name'()
+    $S0 = "Head of baths not Cons but " . $S0
+    die $S0
 .end
 
 # Create a new stack to backtrack over. This makes which continuations belong
