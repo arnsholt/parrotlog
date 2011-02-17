@@ -1,4 +1,4 @@
-main :- write('1..4'), nl,
+main :- write('1..5'), nl,
     test1,
     test2,
     test3,
