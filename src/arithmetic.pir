@@ -47,7 +47,7 @@
     # There are no evaluable functors with arity not equal to 1 or 2.
     if $I0 == 1 goto unary
     if $I0 == 2 goto binary
-    goto not_evaluable
+    goto evaluable
 
   # Section 9.1.1, Evaluable functors and operations
   # Section 9.3, Other arithmetic functors
@@ -63,7 +63,7 @@
     .return ($P1)
 
   abs:
-    unless $S0 == 'abs' goto not_evaluable
+    unless $S0 == 'abs' goto evaluable
     $P1 = abs $P1
     .return ($P1)
 
@@ -153,7 +153,7 @@
     .return ($P1)
 
   mod:
-    unless $S0 == 'mod' goto not_evaluable
+    unless $S0 == 'mod' goto evaluable
     $I0 = isa $P1, 'Integer'
     if $I0 goto intdiv_check2
     $P0 = get_global 'Float'
@@ -179,13 +179,14 @@
 
   instantiation_error:
     # TODO: Throw an exception.
+    'instantiation_error'(term)
   type_error:
     $P0 = get_global 'Term'
     type = $P0.'from_data'(type)
     $P0 = $P0.'from_data'('type_error', type, culprit)
     .tailcall 'error'($P0)
-  not_evaluable:
-    type = box 'not_evaluable'
+  evaluable:
+    type = box 'evaluable'
     culprit = term
     goto type_error
 .end
