@@ -182,6 +182,8 @@
     .local pmc cc
     .local pmc rest
 
+    $I0 = isnull paths
+    if $I0, nullstack
     $I0 = isa paths, 'Cons'
     unless $I0, badstack
 
@@ -197,6 +199,8 @@
     $S0 = $P0.'name'()
     $S0 = "Head of baths not Cons but " . $S0
     die $S0
+  nullstack:
+    die "Null PMC stack!"
 .end
 
 # Create a new stack to backtrack over. This makes which continuations belong
