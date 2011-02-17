@@ -246,90 +246,72 @@ method as_query($in_block = 0) {
     }
     # Section 7.8.9 - catch/3.
     elsif $arity == 3 && $functor eq 'catch' {
-        # XXX: The Goal and Recovery might constitute their own cut
-        # domains. If that's so, the Stmts nodes have to be changed to
-        # Blocks with their own paths lexicals.
-        # First, compile the arguments to catch/3 into the correct forms.
-        my $goal := PAST::Block.new(:blocktype<immediate>, self.args[0].as_query);
-        my $catcher := self.args[1].past;
-        my $recovery := PAST::Block.new(:blocktype<immediate>, self.args[2].as_query);
+        my $parrotex := PAST::Var.new(:name<parrotex>, :scope<register>);
+        my $prologex := PAST::Var.new(:name<prologex>, :scope<register>);
+        my $rethrow := PAST::Op.new(:pirop<rethrow__vP>, $parrotex);
+        my $popeh := PAST::Op.new(:pirop<pop_eh>);
+        my $haspopped := PAST::Var.new(:name<haspopped>, :scope<register>);
 
-        # Some bookkeeping variables we'll be needing.
-        my $ex := PAST::Var.new(:name<ex>, :scope<lexical>);
-        my $ex_obj := PAST::Var.new(:name<ex_obj>, :scope<lexical>);
-        my $unified := PAST::Var.new(:name<unified>, :scope<register>);
-        my $popeh := PAST::Var.new(:name<popeh>, :scope<register>);
-
-        # If the payload of the Exception is a Prolog term, we do this:
-        my $is_term := Parrotlog::Compiler::choicepoint(
-            PAST::Stmts.new(
-                # Try to unify the Ball thrown with the Catcher...
-                Parrotlog::Compiler::procedure_call('=/2',
-                    $paths,
-                    $catcher,
-                    $ex),
-                # If we come this far, the Ball is subsumed by Catcher,
-                # and we want to fail/0 on backtracking, instead of
-                # rethrowing the exception. Make sure we remember that.
-                PAST::Op.new(:pasttype<bind>,
-                    $unified,
-                    PAST::Val.new(:value(1))),
-                # Do the exception handling.
-                $recovery,
-                # If we come this far, we don't have to pop the exception
-                # handler on backtracking, since that's the next thing
-                # done. Make sure we remember that.
-                PAST::Op.new(:pasttype<bind>,
-                    $popeh,
-                    PAST::Val.new(:value(1)))),
-            PAST::Stmts.new(
-                # Pop the exception handler, if needed.
-                PAST::Op.new(:pasttype<if>,
-                    PAST::Op.new(:pirop<isnull>,
-                        $popeh),
-                    PAST::Op.new(:pirop<pop_eh>)),
-                PAST::Op.new(:pasttype<unless>,
-                    PAST::Op.new(:pirop<isnull>,
-                        $unified),
-                    # Unification succeeded: backtrack
-                    Parrotlog::Compiler::call_internal('fail', $origpaths),
-                    # Unification failed: rethrow exception
-                    PAST::Op.new(:pirop<rethrow__vP>,
-                        $ex_obj))));
-
-        # If the payload isn't a term, we just pop the exception handler
-        # and rethrow.
-        my $not_term := PAST::Stmts.new(
-            PAST::Op.new(:pirop<pop_eh>),
-            PAST::Op.new(:pirop<rethrow__vP>,
-                $ex_obj));
-
-        my $handler := PAST::Stmts.new(
-            # Stuff the exception object and payload into the right
-            # variables.
-            PAST::Var.new(:name<ex_obj>, :scope<lexical>, :isdecl, :viviself(
-                PAST::Op.new(:inline('    .get_results(%r)')))),
-            PAST::Var.new(:name<ex>, :scope<lexical>, :isdecl, :viviself(
-                PAST::Var.new(:scope<keyed>,
-                    $ex_obj,
-                    PAST::Val.new(:value<payload>)))),
-            # Declare our bookkeeping variables.
-            PAST::Var.new(:name<unified>, :scope<register>, :isdecl),
-            PAST::Var.new(:name<popeh>, :scope<register>, :isdecl),
-            # Do the right thing depending on the type of the payload.
+        my $goal := PAST::Stmts.new(
+            PAST::Var.new(:name<haspopped>, :scope<register>, :isdecl,
+                :viviself(PAST::Val.new(:value(0)))),
+            Parrotlog::Compiler::procedure_call('call/1',
+                $paths,
+                self.args[0].past),
             PAST::Op.new(:pasttype<unless>,
-                PAST::Op.new(:pirop<isnull>, $ex),
-                PAST::Op.new(:pasttype<if>,
-                    PAST::Op.new(:pasttype<callmethod>, :name<ACCEPTS>,
-                        PAST::Op.new(:inline("    %r = get_root_global ['_parrotlog'], 'Term'")),
-                        $ex),
-                    $is_term),
-                $not_term));
+                $haspopped,
+                PAST::Stmts.new(
+                    $popeh,
+                    PAST::Op.new(:pasttype<bind>,
+                        $haspopped,
+                        PAST::Val.new(:value(1))))),
+        );
 
-        # Return the whole shebang wrapped in an exception handler.
-        return PAST::Op.new(:pasttype<try>,
-            $goal,
-            $handler);
+        my $recovery := PAST::Stmts.new(
+            PAST::Var.new(:name<parrotex>, :scope<register>, :isdecl,
+                :viviself(PAST::Op.new(:inline('    .get_results(%r)')))),
+            PAST::Var.new(:name<prologex>, :scope<register>, :isdecl,
+                :viviself(PAST::Var.new(:scope<keyed>,
+                    $parrotex,
+                    PAST::Val.new(:value('payload'))))),
+
+            # If the payload is NULL, it's not a Prolog exception, so rethrow.
+            PAST::Op.new(:pasttype<if>,
+                PAST::Op.new(:pirop<isnull>, $prologex),
+                $rethrow),
+
+            # If the payload isn't a PrologTerm, it's not a Prolog exception
+            # either, so rethrow.
+            PAST::Op.new(:pasttype<unless>,
+                PAST::Op.new(:pasttype<callmethod>, :name<ACCEPTS>,
+                    PAST::Op.new(:inline("    %r = get_root_global ['_parrotlog'], 'PrologTerm'")),
+                    $prologex),
+                $rethrow),
+
+            # Set up a choicepoint, and unify Catcher and the thrown Ball.
+            PAST::Var.new(:name<tmppaths>, :scope<register>, :isdecl,
+                :viviself(Parrotlog::Compiler::call_internal('choicepoint', $paths))),
+            PAST::Op.new(:pasttype<if>,
+                PAST::Op.new(:pirop<isnull>,
+                    PAST::Var.new(:name<tmppaths>, :scope<register>)),
+                $rethrow),
+            Parrotlog::Compiler::procedure_call('=/2',
+                PAST::Var.new(:name<tmppaths>, :scope<register>),
+                $prologex,
+                self.args[1].past),
+            # Can't tailcall here, because that messes with which lexical
+            # scope is selected in call/1.
+            Parrotlog::Compiler::procedure_call('call/1',
+                $paths,
+                self.args[2].past));
+
+            return PAST::Block.new(:blocktype<immediate>,
+                PAST::Op.new(:inline('    push_eh recovery')),
+                $goal,
+                PAST::Op.new(:inline('    goto done')),
+                PAST::Op.new(:inline('  recovery:')),
+                $recovery,
+                PAST::Op.new(:inline('  done:')));
     }
     # Section 7.8.10 - throw/1.
     elsif $arity == 1 && $functor eq 'throw' {
