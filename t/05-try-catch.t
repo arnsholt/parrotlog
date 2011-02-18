@@ -1,10 +1,11 @@
-main :- write('1..6'), nl,
+main :- write('1..7'), nl,
     test1,
     test2,
     test3,
     test4,
     test5,
-    test6.
+    test6,
+    test7.
 
 test1 :- catch(throw(foo), foo, (write('ok 1'), nl)).
 test2 :-
@@ -30,5 +31,8 @@ test6 :- catch(
     (catch((true; throw(foo)), foo, (write('ok 6 # TODO'), nl)), fail),
         foo,
         (write('not ok 6 # TODO: Backtracking/exceptions'), nl)).
+
+test7 :- catch((true; write('ok 7'), nl), _, _), fail.
+test7.
 
 % vim:filetype=prolog
