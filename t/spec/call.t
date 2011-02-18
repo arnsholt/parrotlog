@@ -48,9 +48,19 @@ test10 :- catch(call((write('# Whut?'), nl, 1)), X, type_error(X, callable, 1)).
 test11 :- catch(call((1; true)), X, type_error(X, callable, 1)).
 
 instantiation_error(error(instantiation_error, _)) :- write('ok'), nl.
-instantiation_error(_) :- write('not ok'), nl.
+instantiation_error(E) :-
+    write('not ok # got '),
+    write(E),
+    write('; expected '),
+    write(error(instantiation_error, _)),
+    nl.
 
 type_error(error(type_error(Type, Culprit), _), Type, Culprit) :- write('ok'), nl.
-type_error(_) :- write('not ok'), nl.
+type_error(E, Type, Culprit) :-
+    write('not ok # got '),
+    write(E),
+    write('; expected '),
+    write(error(type_error(Type, Culprit), _)),
+    nl.
 
 % vim:filetype=prolog
