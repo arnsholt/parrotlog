@@ -13,17 +13,17 @@ test2 :-
     foo, (write('ok 2'), nl)).
 test3 :-
     catch(
-        (catch(throw(foo), _, fail); write('ok 3 # TODO'), nl),
+        (catch(throw(foo), _, fail); write('ok 3'), nl),
         foo,
-        (write('not ok 3 # TODO backtracking bug'), nl)).
+        (write('not ok 3'), nl)).
 
 test4 :- (true; write('ok 4'), nl), catch(true, _, true), fail.
 test4.
 
 test5 :- catch(
-    (catch(throw(foo), _, true), fail; write('ok 5 # TODO'), nl),
+    (catch(throw(foo), _, true), fail; write('ok 5'), nl),
     foo,
-    (write('not ok 5 # TODO backtracking bug'), nl)).
+    (write('not ok 5'), nl)).
 
 % Check that the exception handler is reinstated on backtracking.
 test6 :- catch(

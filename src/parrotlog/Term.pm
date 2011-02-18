@@ -147,6 +147,10 @@ method as_query($in_block = 0) {
         $block.push: PAST::Var.new(:name<paths>, :scope<lexical>, :isdecl,
             :viviself(PAST::Var.new(:name<origpaths>, :scope<lexical>)));
         $block.push: self.as_query;
+        # XXX: This doesn't appear to be necessary, but in case it turns out
+        # to be required, I leave it commented out.
+        #$block.push: PAST::Op.new(:inline('    .return (%0)'), $paths);
+
         return $block;
     }
 
@@ -288,17 +292,24 @@ method as_query($in_block = 0) {
                     $prologex),
                 $rethrow),
 
+            PAST::Var.new(:name<unified>, :scope<register>, :isdecl,
+                :viviself(PAST::Val.new(:value(0)))),
+            PAST::Var.new(:name<curpaths>, :scope<register>, :isdecl,
+                :viviself($paths)),
             # Set up a choicepoint, and unify Catcher and the thrown Ball.
-            PAST::Var.new(:name<tmppaths>, :scope<register>, :isdecl,
-                :viviself(Parrotlog::Compiler::call_internal('choicepoint', $paths))),
-            PAST::Op.new(:pasttype<if>,
-                PAST::Op.new(:pirop<isnull>,
-                    PAST::Var.new(:name<tmppaths>, :scope<register>)),
-                $rethrow),
-            Parrotlog::Compiler::procedure_call('=/2',
-                PAST::Var.new(:name<tmppaths>, :scope<register>),
-                $prologex,
-                self.args[1].past),
+            Parrotlog::Compiler::choicepoint(
+                Parrotlog::Compiler::procedure_call('=/2',
+                    $paths,
+                    $prologex,
+                    self.args[1].past),
+                PAST::Op.new(:pasttype<if>,
+                    PAST::Var.new(:name<unified>, :scope<register>),
+                    Parrotlog::Compiler::call_internal('fail',
+                        PAST::Var.new(:name<curpaths>, :scope<register>)),
+                    $rethrow)),
+            PAST::Op.new(:pasttype<bind>,
+                PAST::Var.new(:name<unified>, :scope<register>),
+                PAST::Val.new(:value(1))),
             # Can't tailcall here, because that messes with which lexical
             # scope is selected in call/1.
             Parrotlog::Compiler::procedure_call('call/1',
