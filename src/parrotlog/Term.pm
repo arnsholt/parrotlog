@@ -254,12 +254,22 @@ method as_query($in_block = 0) {
         my $prologex := PAST::Var.new(:name<prologex>, :scope<register>);
         my $rethrow := PAST::Op.new(:pirop<rethrow__vP>, $parrotex);
         my $popeh := PAST::Op.new(:pirop<pop_eh>);
+        my $haspopped := PAST::Var.new(:name<haspopped>, :scope<register>);
 
         my $goal := PAST::Stmts.new(
+            PAST::Var.new(:name<haspopped>, :scope<register>, :isdecl,
+                :viviself(PAST::Val.new(:value(0)))),
             Parrotlog::Compiler::procedure_call('call/1',
                 $paths,
                 self.args[0].past),
-            $popeh);
+            PAST::Op.new(:pasttype<unless>,
+                $haspopped,
+                PAST::Stmts.new(
+                    $popeh,
+                    PAST::Op.new(:pasttype<bind>,
+                        $haspopped,
+                        PAST::Val.new(:value(1))))),
+        );
 
         my $recovery := PAST::Stmts.new(
             PAST::Var.new(:name<parrotex>, :scope<register>, :isdecl,
