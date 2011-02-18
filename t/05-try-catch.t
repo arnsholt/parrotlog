@@ -1,9 +1,10 @@
-main :- write('1..5'), nl,
+main :- write('1..6'), nl,
     test1,
     test2,
     test3,
     test4,
-    test5.
+    test5,
+    test6.
 
 test1 :- catch(throw(foo), foo, (write('ok 1'), nl)).
 test2 :-
@@ -12,17 +13,22 @@ test2 :-
     foo, (write('ok 2'), nl)).
 test3 :-
     catch(
-        (catch(throw(foo), _, fail); write('ok 3'), nl),
+        (catch(throw(foo), _, fail); write('ok 3 # TODO'), nl),
         foo,
         (write('not ok 3 # TODO backtracking bug'), nl)).
-test4 :- write('ok 4 # SKIP: blows up'), nl.
-%test4:- catch(
-%    (catch(throw(foo), _, true), fail; write('ok 4'), nl),
-%    foo,
-%    (write('not ok 4'), nl)).
 
-test5 :- write('ok 5 # SKIP: blows up'), nl.
-%test5 :- catch((true; throw(foo)), foo, (write('ok 5'), nl)), fail.
-%test5.
+test4 :- (true; write('ok 4'), nl), catch(true, _, true), fail.
+test4.
+
+test5 :- catch(
+    (catch(throw(foo), _, true), fail; write('ok 5 # TODO'), nl),
+    foo,
+    (write('not ok 5 # TODO backtracking bug'), nl)).
+
+% Check that the exception handler is reinstated on backtracking.
+test6 :- catch(
+    (catch((true; throw(foo)), foo, (write('ok 6 # TODO'), nl)), fail),
+        foo,
+        (write('not ok 6 # TODO: Backtracking/exceptions'), nl)).
 
 % vim:filetype=prolog

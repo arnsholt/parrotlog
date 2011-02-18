@@ -238,7 +238,7 @@ method as_query($in_block = 0) {
     }
     # Section 7.8.1, true/0.
     elsif $arity == 0 && $functor eq 'true' {
-        return PAST::Stmts.new();
+        return $paths;
     }
     # Section 7.8.2, fail/0.
     elsif $arity == 0 && $functor eq 'fail' {
